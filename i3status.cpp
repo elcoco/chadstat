@@ -4,6 +4,8 @@
 #include <sys/statvfs.h>
 #include <unistd.h>
 
+#include <dirent.h>     // list dirs
+
 
 #include <stdlib.h>
 #include <string.h>
@@ -16,8 +18,10 @@
 #include <linux/wireless.h>
 
 
-//#define IW_INTERFACE "wlp1s0"
-#define IW_INTERFACE "wlp3s0"
+#define IW_INTERFACE "wlp1s0"
+#define BATT_PATH "/sys/class/power_supply"
+//#define BATT_PATH "/sys/class/power_supply/BAT0/capacity"
+//#define IW_INTERFACE "wlp3s0"
 
 struct colors_t {
     const char orange[8] = "#ad6500";
@@ -163,8 +167,35 @@ block_t get_datetime(const char* color) {
     return block;
 }
 
-block_t get_batt_level(const char* path) {
+block_t get_batt_level() {
     block_t block;
+
+    char path[300] = {'\0'};
+    sprintf(path, "%s", BATT_PATH);
+
+    struct dirent *de;  // Pointer for directory entry 
+    DIR *dr = opendir (path);
+
+    if (dr == NULL) {
+        sprintf(block.full_text, "%s\n", "DIR ERROR");
+        return block;
+    }
+
+    // find dir containing BAT*
+    while ((de = readdir(dr)) != NULL) {
+        if (strstr(de->d_name, "BAT") != NULL) {
+            strcat(path, "/");
+            strcat(path, de->d_name);
+            strcat(path, "/capacity");
+            break;
+        }
+    }
+
+    // exit if file doesn't exist
+    if (access(path, F_OK ) == -1) {
+        sprintf(block.full_text, "%s\n", "FILE ERROR");
+        return block;
+    }
 
     FILE *fp;
     char buffer[4];
@@ -172,32 +203,25 @@ block_t get_batt_level(const char* path) {
     fp = fopen(path, "r");
     if (fp == NULL) {
         block.full_text[0] = '0';
-    } else {
+    }
+    else {
         fgets(block.full_text, 4, (FILE*)fp);
     }
+    // remove trailing newlines
     strtok(block.full_text, "\n");
 
     return block;
 }
 
-void get_block(char* buffer, const char* full_text, const char* color, bool sep=1) {
-    uint8_t sep_block_width = sep ? 20 : 0;
-    sprintf(buffer, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": %d}", full_text, color, sep_block_width);
-}
-
 void print_header() {
     printf("{ \"version\": 1 } \n[\n[],\n");
-}
-void print_footer() {
-    printf("],");
 }
 
 int main() {
     print_header();
 
     while (1) {
-
-        block_t battery = get_batt_level("/sys/class/power_supply/BAT1/capacity");
+        block_t battery = get_batt_level();
         battery.set_graph(colors.orange, colors.gray);
 
         block_t datetime = get_datetime(colors.gray);
