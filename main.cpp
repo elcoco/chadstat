@@ -6,6 +6,7 @@
 
 #include <dirent.h>     // list dirs
 
+#include <alsa/asoundlib.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -17,15 +18,21 @@
 #include <errno.h>
 #include <linux/wireless.h>
 
+// get network interfaces
+#include <sys/types.h>
+#include <ifaddrs.h>
+#include <linux/if_link.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
 // pulseaudio (libpulse-dev)
 #include <pulse/simple.h>
 #include <pulse/error.h>
 #include <pulse/volume.h>
 
-#define IW_INTERFACE "wlp1s0"
 #define BATT_PATH "/sys/class/power_supply"
 #define TIMEOUT 3
-//#define IW_INTERFACE "wlp3s0"
 
 struct colors_t {
     const char orange[8] = "#ad6500";
@@ -112,6 +119,61 @@ struct block_t {
 };
 
 
+uint8_t check_wireless(const char* ifname, char* protocol) {
+    int sock = -1;
+    struct iwreq pwrq;
+    memset(&pwrq, 0, sizeof(pwrq));
+    strncpy(pwrq.ifr_name, ifname, IFNAMSIZ);
+
+
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+        perror("socket");
+        close(sock);
+        return 0;
+    }
+
+    if (ioctl(sock, SIOCGIWNAME, &pwrq) != -1) {
+        if (protocol) strncpy(protocol, pwrq.u.name, IFNAMSIZ); {
+            close(sock);
+            return 1;
+        }
+    }
+
+    close(sock);
+    return 0;
+}
+
+int8_t get_ifaddr(char* ifname) {
+    ifaddrs *ifaddr, *ifa;
+    int family, s, n;
+    char host[NI_MAXHOST];
+
+    if (getifaddrs(&ifaddr) == -1) {
+        return -1;
+    }
+
+    /* Walk through linked list, maintaining head pointer so we
+      can free list later */
+
+    for (ifa=ifaddr, n=0 ; ifa!=NULL ; ifa=ifa->ifa_next, n++) {
+        if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_PACKET) {
+            freeifaddrs(ifaddr);
+            continue;
+        }
+
+        char protocol[IFNAMSIZ]  = {0};
+
+        if (check_wireless(ifa->ifa_name, protocol)) {
+            strcpy(ifname, ifa->ifa_name);
+            freeifaddrs(ifaddr);
+            return 0;
+        }
+    }
+
+    freeifaddrs(ifaddr);
+    return -1;
+}
+
 uint16_t get_fs_usage(const char* path) {
     struct statvfs stat;
     statvfs(path, &stat);
@@ -124,9 +186,15 @@ uint16_t get_fs_total(const char* path) {
     return (stat.f_bsize * stat.f_blocks)/1024/1024/1024;
 }
 
-
-block_t get_essid() {
+block_t get_essid(int16_t* link_quality) {
     block_t block;
+
+    // find wireless if address
+    char ifaddr[20] = {'\0'};
+    if (get_ifaddr(ifaddr) == -1){
+        block.set_error("IF ERROR");
+        return block;
+    }
 
     int sockfd;
     char * id;
@@ -136,11 +204,12 @@ block_t get_essid() {
     memset(&wreq, 0, sizeof(struct iwreq));
     wreq.u.essid.length = IW_ESSID_MAX_SIZE+1;
 
-    strcpy(wreq.ifr_name, IW_INTERFACE);
+    strcpy(wreq.ifr_name, ifaddr);
 
 
     if((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
         block.set_error("SOCKET ERROR");
+        close(sockfd);
         return block;
     }
 
@@ -157,7 +226,7 @@ block_t get_essid() {
             block.set_error("DISCONNECTED");
         }
     }
-
+    close(sockfd);
     return block;
 }
 
@@ -182,7 +251,7 @@ block_t get_batt_level() {
     strcpy(path, BATT_PATH);
 
     struct dirent *de;  // Pointer for directory entry 
-    DIR *dr = opendir (path);
+    DIR *dr = opendir(path);
 
     if (dr == NULL) {
         block.set_error("DIR ERROR");
@@ -197,6 +266,7 @@ block_t get_batt_level() {
             break;
         }
     }
+
     strcat(capacity_path, path);
     strcat(capacity_path, "/capacity");
     strcat(status_path, path);
@@ -227,6 +297,7 @@ block_t get_batt_level() {
     // remove trailing newlines
     strtok(block.text, "\n");
 
+    fclose(fp);
     return block;
 }
 
@@ -239,10 +310,10 @@ block_t get_pavolume() {
     ss.channels = 2;
     ss.rate = 44100;
     s = pa_simple_new(NULL,               // Use the default server.
-                      "Fooapp",           // Our application's name.
+                      "I3Status",           // Our application's name.
                       PA_STREAM_PLAYBACK,
                       NULL,               // Use the default device.
-                      "Music",            // Description of our stream.
+                      "Check",            // Description of our stream.
                       &ss,                // Our sample format.
                       NULL,               // Use default channel map
                       NULL,               // Use default buffering attributes.
@@ -252,9 +323,64 @@ block_t get_pavolume() {
     pa_cvolume pa_cvolume;
     char res[500] = {'\0'};
     pa_cvolume_snprint(res, 500, &pa_cvolume);
-    //printf("\n%s\n", res);
+    printf("\n%s\n", res);
+    sleep(5);
+    pa_simple_free(s);
 
     return block;
+}
+void SetAlsaMasterVolume(long volume)
+{
+    long min, max;
+    snd_mixer_t *handle;
+    snd_mixer_selem_id_t *sid;
+    const char *card = "default";
+    const char *selem_name = "Master";
+
+    snd_mixer_open(&handle, 0);
+    snd_mixer_attach(handle, card);
+    snd_mixer_selem_register(handle, NULL, NULL);
+    snd_mixer_load(handle);
+
+    snd_mixer_selem_id_alloca(&sid);
+    snd_mixer_selem_id_set_index(sid, 0);
+    snd_mixer_selem_id_set_name(sid, selem_name);
+    snd_mixer_elem_t* elem = snd_mixer_find_selem(handle, sid);
+
+    snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
+    snd_mixer_selem_set_playback_volume_all(elem, volume * max / 100);
+
+    snd_mixer_close(handle);
+}
+
+uint16_t get_alsa_volume()
+{
+    long min, max;
+    snd_mixer_t *handle;
+    snd_mixer_selem_id_t *sid;
+    const char *card = "default";
+    const char *selem_name = "Master";
+
+    snd_mixer_open(&handle, 0);
+    snd_mixer_attach(handle, card);
+    snd_mixer_selem_register(handle, NULL, NULL);
+    snd_mixer_load(handle);
+
+    snd_mixer_selem_id_alloca(&sid);
+    snd_mixer_selem_id_set_index(sid, 0);
+    snd_mixer_selem_id_set_name(sid, selem_name);
+    snd_mixer_elem_t* elem = snd_mixer_find_selem(handle, sid);
+
+    snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
+    printf("\n%ld  %ld\n", min, max);
+
+    long level;
+	snd_mixer_selem_channel_id_t chn = 0;
+    snd_mixer_selem_get_playback_volume(elem, chn, &level);
+    //snd_mixer_selem_set_playback_volume_all(elem, volume * max / 100);
+
+    snd_mixer_close(handle);
+    return 5;
 }
 
 void print_header() {
@@ -265,10 +391,15 @@ int main() {
     print_header();
 
     while (1) {
-        block_t volume = get_pavolume();
+        SetAlsaMasterVolume(70);
+        uint8_t volume = get_alsa_volume();
+
+        //block_t volume = get_pavolume();
         block_t battery = get_batt_level();
         block_t datetime = get_datetime();
-        block_t essid = get_essid();
+
+        int16_t link_quality;
+        block_t essid = get_essid(&link_quality);
 
         printf("[\n");
         printf("%s,\n", battery.get_graph(colors.orange, colors.gray));
@@ -281,6 +412,4 @@ int main() {
     }
 
     return 0;
-
-
 }
