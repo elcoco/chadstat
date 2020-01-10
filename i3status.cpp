@@ -20,93 +20,90 @@
 
 #define IW_INTERFACE "wlp1s0"
 #define BATT_PATH "/sys/class/power_supply"
-//#define BATT_PATH "/sys/class/power_supply/BAT0/capacity"
+#define TIMEOUT 3
 //#define IW_INTERFACE "wlp3s0"
 
 struct colors_t {
     const char orange[8] = "#ad6500";
     const char gray[8]   = "#848484";
+    const char white[8]   = "#cccccc";
 } colors;
 
 struct block_t {
-    char full_text[50] = {'\0'};
-    char color[10]      = {'\0'};
-    char fmt_text[300]  = {'\0'};
-    char lgraph[30]    = {'\0'};
-    char rgraph[30]    = {'\0'};
+    char text[50] = {'\0'};
+    char fmt_text[300] = {'\0'};
     bool separator = 1;
 
-    uint8_t graph_length = 20;
     char    graph_chr1 = '|';
     char    graph_chr2 = '|';
-    char    graph_color1[10]      = {'\0'};
-    char    graph_color2[10]      = {'\0'};
-    bool    is_graph = false;
-    bool    is_strgraph = false;
 
-    void set_graph(const char* color1, const char* color2) {
-        is_graph = true;
-        sprintf(graph_color1, "%s", color1);
-        sprintf(graph_color2, "%s", color2);
+    bool is_error = false;
+
+    // indicate whether there was an error or not, graphs shouldn't be displayed in case of an error
+    void set_error(const char* error) {
+        is_error = true;
+        strcpy(text, error);
     }
 
-    void set_strgraph(const char* color1, const char* color2) {
-        is_strgraph = true;
-        sprintf(graph_color1, "%s", color1);
-        sprintf(graph_color2, "%s", color2);
-    }
-
-    char* get(bool graph=false) {
+    char* get(const char* color) {
         uint8_t sep_block_width = separator ? 20 : 0;
-        if (is_graph) {
-            get_graph();
-            char l[300] = {'\0'};
-            char r[300] = {'\0'};
-            sprintf(l, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": 0}", lgraph, graph_color1);
-            sprintf(r, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": %d}", rgraph, graph_color2, sep_block_width);
-            sprintf(fmt_text, "%s,\n%s", l, r);
-        }
-        /*
-        else if (is_strgraph) {
-            get_strgraph();
-            char l[300] = {'\0'};
-            char r[300] = {'\0'};
-            sprintf(l, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": 0}", lgraph, graph_color1);
-            sprintf(r, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": %d}", rgraph, graph_color2, sep_block_width);
-            sprintf(fmt_text, "%s,%s", l, r);
-        }
-        */
-        else {
-            sprintf(fmt_text, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": %d}", full_text, color, sep_block_width);
-        }
+        sprintf(fmt_text, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": %d}", text, color, sep_block_width);
         return fmt_text;
     }
 
-    void get_graph() {
-        is_graph = 1;
-        uint8_t percent = atoi(full_text);
-        int8_t level = (percent / 100.0) * graph_length;
+    char* get_graph(const char* color1, const char* color2, uint8_t length=20) {
+        if (is_error)
+            return get(color1);
 
-        for (uint8_t i=0 ; i<level ; i++) {
-            lgraph[i] = graph_chr1;
-        }
-        for (uint8_t i=0 ; i<graph_length-level ; i++) {
-            rgraph[i] = graph_chr2;
-        }
-    }
-
-    void get_strgraph(char* lgraph, char* rgraph, char* inp_str, uint8_t length, uint8_t percent) {
+        uint8_t percent = atoi(text);
         int8_t level = (percent / 100.0) * length;
-        uint8_t index = 0;
+        uint8_t sep_block_width = separator ? 20 : 0;
+
+        char l_text[length+1] = {'\0'};
+        char r_text[length+1] = {'\0'};
+        char l_fmt[300]       = {'\0'};
+        char r_fmt[300]       = {'\0'};
 
         for (uint8_t i=0 ; i<level ; i++) {
-            lgraph[i] = inp_str[index];
-            index++;
+            l_text[i] = graph_chr1;
         }
         for (uint8_t i=0 ; i<length-level ; i++) {
-            rgraph[i] = inp_str[index];
+            r_text[i] = graph_chr2;
+        }
+
+        sprintf(l_fmt, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": 0}", l_text, color1);
+        sprintf(r_fmt, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": %d}", r_text, color2, sep_block_width);
+        sprintf(fmt_text, "%s,\n%s", l_fmt, r_fmt);
+        return fmt_text;
+    }
+
+    char* get_strgraph(const char* color1, const char* color2, uint8_t percent) {
+        if (is_error)
+            return get(color1);
+
+        uint8_t graph_len = strlen(text);
+        int8_t level = (percent / 100.0) * graph_len;
+        uint8_t sep_block_width = separator ? 20 : 0;
+        uint8_t index = 0;
+
+        char l_text[graph_len+1] = {'\0'};
+        char r_text[graph_len+1] = {'\0'};
+        char l_fmt[300]          = {'\0'};
+        char r_fmt[300]          = {'\0'};
+
+        for (uint8_t i=0 ; i<level ; i++) {
+            l_text[i] = text[index];
             index++;
         }
+        for (uint8_t i=0 ; i<graph_len-level ; i++) {
+            r_text[i] = text[index];
+            index++;
+        }
+
+        sprintf(l_fmt, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": 0}", l_text, color1);
+        sprintf(r_fmt, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": %d}", r_text, color2, sep_block_width);
+        sprintf(fmt_text, "%s,\n%s", l_fmt, r_fmt);
+        return fmt_text;
     }
 };
 
@@ -135,11 +132,11 @@ block_t get_essid() {
     memset(&wreq, 0, sizeof(struct iwreq));
     wreq.u.essid.length = IW_ESSID_MAX_SIZE+1;
 
-    sprintf(wreq.ifr_name, IW_INTERFACE);
+    strcpy(wreq.ifr_name, IW_INTERFACE);
 
 
     if((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-        sprintf(block.full_text, "%s", "socket error");
+        block.set_error("SOCKET ERROR");
         return block;
     }
 
@@ -147,22 +144,25 @@ block_t get_essid() {
     wreq.u.essid.pointer = id;
 
     if (ioctl(sockfd,SIOCGIWESSID, &wreq) == -1) {
-        sprintf(block.full_text, "%s: %d", "ioctl error", errno);
+        block.set_error("IOCTL ERROR");
     }
     else {
-        sprintf(block.full_text, "%s",  (char *)wreq.u.essid.pointer);
+        if (strlen((char *)wreq.u.essid.pointer) > 0)
+            strcpy(block.text,  (char *)wreq.u.essid.pointer);
+        else {
+            block.set_error("DISCONNECTED");
+        }
     }
 
     return block;
 }
 
-block_t get_datetime(const char* color) {
+block_t get_datetime() {
     block_t block;
-    sprintf(block.color, "%s", color);
 
     time_t t = time(NULL);            // 32bit integer representing time
     struct tm tm = *localtime(&t);    // get struct with time data
-    strftime(block.full_text, 100,"%A %Y:%m:%d %H:%M",&tm);
+    strftime(block.text, 100,"%A %d:%m:%Y %H:%M",&tm);
 
     return block;
 }
@@ -171,13 +171,17 @@ block_t get_batt_level() {
     block_t block;
 
     char path[300] = {'\0'};
-    sprintf(path, "%s", BATT_PATH);
+    char capacity_path[300] = {'\0'};
+    char status_path[300] = {'\0'};
+    char status[300] = {'\0'};
+
+    strcpy(path, BATT_PATH);
 
     struct dirent *de;  // Pointer for directory entry 
     DIR *dr = opendir (path);
 
     if (dr == NULL) {
-        sprintf(block.full_text, "%s\n", "DIR ERROR");
+        block.set_error("DIR ERROR");
         return block;
     }
 
@@ -186,29 +190,38 @@ block_t get_batt_level() {
         if (strstr(de->d_name, "BAT") != NULL) {
             strcat(path, "/");
             strcat(path, de->d_name);
-            strcat(path, "/capacity");
             break;
         }
     }
+    strcat(capacity_path, path);
+    strcat(capacity_path, "/capacity");
+    strcat(status_path, path);
+    strcat(status_path, "/status");
+
 
     // exit if file doesn't exist
-    if (access(path, F_OK ) == -1) {
-        sprintf(block.full_text, "%s\n", "FILE ERROR");
+    if (access(capacity_path, F_OK ) == -1) {
+        block.set_error("CAPACITY FILE ERROR");
+        return block;
+    }
+    // exit if file doesn't exist
+    if (access(status_path, F_OK ) == -1) {
+        block.set_error("STATUS FILE ERROR");
         return block;
     }
 
     FILE *fp;
     char buffer[4];
 
-    fp = fopen(path, "r");
+    fp = fopen(capacity_path, "r");
     if (fp == NULL) {
-        block.full_text[0] = '0';
+        block.set_error("CAPACITY READ ERROR");
     }
     else {
-        fgets(block.full_text, 4, (FILE*)fp);
+        fgets(block.text, 4, (FILE*)fp);
     }
     // remove trailing newlines
-    strtok(block.full_text, "\n");
+    strtok(block.text, "\n");
 
     return block;
 }
@@ -222,20 +235,17 @@ int main() {
 
     while (1) {
         block_t battery = get_batt_level();
-        battery.set_graph(colors.orange, colors.gray);
-
-        block_t datetime = get_datetime(colors.gray);
-
+        block_t datetime = get_datetime();
         block_t essid = get_essid();
 
         printf("[\n");
-        printf("%s,\n", battery.get());
-        printf("%s,\n", essid.get());
-        printf("%s\n", datetime.get());
+        printf("%s,\n", battery.get_graph(colors.orange, colors.gray));
+        printf("%s,\n", essid.get_strgraph(colors.orange, colors.gray, 50));
+        printf("%s\n",  datetime.get(colors.gray));
         printf("],\n");
 
         fflush(stdout);     // flush buffer
-        sleep(5);
+        sleep(TIMEOUT);
     }
 
     return 0;
