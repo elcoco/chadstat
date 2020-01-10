@@ -32,12 +32,13 @@
 #include <pulse/volume.h>
 
 #define BATT_PATH "/sys/class/power_supply"
-#define TIMEOUT 3
+#define TIMEOUT 1
 
 struct colors_t {
     const char orange[8] = "#ad6500";
     const char gray[8]   = "#848484";
     const char white[8]   = "#cccccc";
+    const char green[8]   = "#009900";
 } colors;
 
 struct block_t {
@@ -329,58 +330,42 @@ block_t get_pavolume() {
 
     return block;
 }
-void SetAlsaMasterVolume(long volume)
+
+
+block_t get_alsa_volume()
 {
+    block_t block;
+
     long min, max;
-    snd_mixer_t *handle;
-    snd_mixer_selem_id_t *sid;
-    const char *card = "default";
-    const char *selem_name = "Master";
-
-    snd_mixer_open(&handle, 0);
-    snd_mixer_attach(handle, card);
-    snd_mixer_selem_register(handle, NULL, NULL);
-    snd_mixer_load(handle);
-
-    snd_mixer_selem_id_alloca(&sid);
-    snd_mixer_selem_id_set_index(sid, 0);
-    snd_mixer_selem_id_set_name(sid, selem_name);
-    snd_mixer_elem_t* elem = snd_mixer_find_selem(handle, sid);
-
-    snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
-    snd_mixer_selem_set_playback_volume_all(elem, volume * max / 100);
-
-    snd_mixer_close(handle);
-}
-
-uint16_t get_alsa_volume()
-{
-    long min, max;
-    snd_mixer_t *handle;
-    snd_mixer_selem_id_t *sid;
-    const char *card = "default";
-    const char *selem_name = "Master";
-
-    snd_mixer_open(&handle, 0);
-    snd_mixer_attach(handle, card);
-    snd_mixer_selem_register(handle, NULL, NULL);
-    snd_mixer_load(handle);
-
-    snd_mixer_selem_id_alloca(&sid);
-    snd_mixer_selem_id_set_index(sid, 0);
-    snd_mixer_selem_id_set_name(sid, selem_name);
-    snd_mixer_elem_t* elem = snd_mixer_find_selem(handle, sid);
-
-    snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
-    printf("\n%ld  %ld\n", min, max);
-
     long level;
-	snd_mixer_selem_channel_id_t chn = 0;
-    snd_mixer_selem_get_playback_volume(elem, chn, &level);
-    //snd_mixer_selem_set_playback_volume_all(elem, volume * max / 100);
+    uint16_t volume;
+
+    snd_mixer_t *handle;
+    snd_mixer_selem_id_t *sid;
+
+    const char *card = "default";
+    const char *selem_name = "Master";
+
+    snd_mixer_open(&handle, 0);
+    snd_mixer_attach(handle, card);
+    snd_mixer_selem_register(handle, NULL, NULL);
+    snd_mixer_load(handle);
+
+    snd_mixer_selem_id_alloca(&sid);
+    snd_mixer_selem_id_set_index(sid, 0);
+    snd_mixer_selem_id_set_name(sid, selem_name);
+    snd_mixer_elem_t* elem = snd_mixer_find_selem(handle, sid);
+
+    snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
+
+    snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &level);
+
+    volume = ((float)level/(float)max)*100.00;
+
+    sprintf(block.text, "%d", volume);
 
     snd_mixer_close(handle);
-    return 5;
+    return block;
 }
 
 void print_header() {
@@ -391,10 +376,7 @@ int main() {
     print_header();
 
     while (1) {
-        SetAlsaMasterVolume(70);
-        uint8_t volume = get_alsa_volume();
-
-        //block_t volume = get_pavolume();
+        block_t volume = get_alsa_volume();
         block_t battery = get_batt_level();
         block_t datetime = get_datetime();
 
@@ -402,6 +384,7 @@ int main() {
         block_t essid = get_essid(&link_quality);
 
         printf("[\n");
+        printf("%s,\n", volume.get_graph(colors.green, colors.gray));
         printf("%s,\n", battery.get_graph(colors.orange, colors.gray));
         printf("%s,\n", essid.get_strgraph(colors.orange, colors.gray, 50));
         printf("%s\n",  datetime.get(colors.gray));
