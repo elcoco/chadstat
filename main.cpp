@@ -68,6 +68,8 @@ struct block_t {
             return get(color1);
 
         uint8_t percent = atoi(text);
+        if (percent > 100)
+            percent = 100;
         int8_t level = (percent / 100.0) * length;
         uint8_t sep_block_width = separator ? 20 : 0;
 
@@ -83,15 +85,26 @@ struct block_t {
             r_text[i] = graph_chr2;
         }
 
-        sprintf(l_fmt, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": 0}", l_text, color1);
-        sprintf(r_fmt, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": %d}", r_text, color2, sep_block_width);
-        sprintf(fmt_text, "%s,\n%s", l_fmt, r_fmt);
+        // handle case where level is maximum length, second line would be skipped and screw up spacing between blocks (see i3 input protocol)
+        if (level == length) {
+            sprintf(l_fmt, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": %d}", l_text, color1, sep_block_width);
+            sprintf(fmt_text, "%s", l_fmt);
+        }
+        else {
+            sprintf(l_fmt, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": 0}", l_text, color1);
+            sprintf(r_fmt, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": %d}", r_text, color2, sep_block_width);
+            sprintf(fmt_text, "%s,\n%s", l_fmt, r_fmt);
+        }
+
         return fmt_text;
     }
 
     char* get_strgraph(const char* color1, const char* color2, uint8_t percent) {
         if (is_error)
             return get(color1);
+
+        if (percent > 100)
+            percent = 100;
 
         uint8_t graph_len = strlen(text);
         int8_t level = (percent / 100.0) * graph_len;
@@ -112,9 +125,16 @@ struct block_t {
             index++;
         }
 
-        sprintf(l_fmt, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": 0}", l_text, color1);
-        sprintf(r_fmt, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": %d}", r_text, color2, sep_block_width);
-        sprintf(fmt_text, "%s,\n%s", l_fmt, r_fmt);
+        // handle case where level is maximum length, second line would be skipped and screw up spacing between blocks (see i3 input protocol)
+        if (level == graph_len) {
+            sprintf(l_fmt, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": %d}", l_text, color1, sep_block_width);
+            sprintf(fmt_text, "%s", l_fmt);
+        }
+        else {
+            sprintf(l_fmt, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": 0}", l_text, color1);
+            sprintf(r_fmt, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": %d}", r_text, color2, sep_block_width);
+            sprintf(fmt_text, "%s,\n%s", l_fmt, r_fmt);
+        }
         return fmt_text;
     }
 };
