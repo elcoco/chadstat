@@ -17,6 +17,10 @@
 #include <errno.h>
 #include <linux/wireless.h>
 
+// pulseaudio (libpulse-dev)
+#include <pulse/simple.h>
+#include <pulse/error.h>
+#include <pulse/volume.h>
 
 #define IW_INTERFACE "wlp1s0"
 #define BATT_PATH "/sys/class/power_supply"
@@ -242,8 +246,14 @@ block_t get_pavolume() {
                       &ss,                // Our sample format.
                       NULL,               // Use default channel map
                       NULL,               // Use default buffering attributes.
-                      NULL,               // Ignore error code.
+                      NULL               // Ignore error code.
                       );
+
+    pa_cvolume pa_cvolume;
+    char res[500] = {'\0'};
+    pa_cvolume_snprint(res, 500, &pa_cvolume);
+    //printf("\n%s\n", res);
+
     return block;
 }
 
@@ -255,6 +265,7 @@ int main() {
     print_header();
 
     while (1) {
+        block_t volume = get_pavolume();
         block_t battery = get_batt_level();
         block_t datetime = get_datetime();
         block_t essid = get_essid();
