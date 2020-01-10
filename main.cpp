@@ -75,8 +75,8 @@ struct block_t {
 
         char l_text[length+1] = {'\0'};
         char r_text[length+1] = {'\0'};
-        char l_fmt[300]       = {'\0'};
-        char r_fmt[300]       = {'\0'};
+        char l_fmt[150]       = {'\0'};
+        char r_fmt[150]       = {'\0'};
 
         for (uint8_t i=0 ; i<level ; i++) {
             l_text[i] = graph_chr1;
@@ -113,8 +113,8 @@ struct block_t {
 
         char l_text[graph_len+1] = {'\0'};
         char r_text[graph_len+1] = {'\0'};
-        char l_fmt[300]          = {'\0'};
-        char r_fmt[300]          = {'\0'};
+        char l_fmt[150]          = {'\0'};
+        char r_fmt[150]          = {'\0'};
 
         for (uint8_t i=0 ; i<level ; i++) {
             l_text[i] = text[index];
@@ -264,10 +264,10 @@ block_t get_datetime() {
 block_t get_batt_level() {
     block_t block;
 
-    char path[300] = {'\0'};
-    char capacity_path[300] = {'\0'};
-    char status_path[300] = {'\0'};
-    char status[300] = {'\0'};
+    char path[100] = {'\0'};
+    char capacity_path[100] = {'\0'};
+    char status_path[100] = {'\0'};
+    char status[20] = {'\0'};
 
     strcpy(path, BATT_PATH);
 
@@ -375,9 +375,7 @@ block_t get_alsa_volume()
     snd_mixer_selem_id_set_index(sid, 0);
     snd_mixer_selem_id_set_name(sid, selem_name);
     snd_mixer_elem_t* elem = snd_mixer_find_selem(handle, sid);
-
     snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
-
     snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &level);
 
     volume = ((float)level/(float)max)*100.00;
