@@ -32,6 +32,7 @@
 #include <pulse/volume.h>
 
 #define BATT_PATH "/sys/class/power_supply"
+#define WIRELESS_PATH "/proc/net/wireless"
 #define TIMEOUT 1
 
 struct colors_t {
@@ -207,7 +208,43 @@ uint16_t get_fs_total(const char* path) {
     return (stat.f_bsize * stat.f_blocks)/1024/1024/1024;
 }
 
-block_t get_essid(int16_t* link_quality) {
+
+int8_t get_signal_strength(char* interface) {
+    // exit if file doesn't exist
+    if (access(WIRELESS_PATH, F_OK ) == -1) {
+        return -1;
+    }
+
+    FILE *fp;
+    char buffer[4];
+
+    fp = fopen(WIRELESS_PATH, "r");
+    if (fp == NULL) {
+        fclose(fp);
+        return -1;
+    }
+
+    size_t len = 0;
+    char* line = NULL;
+
+    while (getline(&line, &len, fp) != -1) {
+        if (strstr(line, interface))
+            break;
+    }
+
+    fclose(fp);
+
+    if (line == NULL)
+        return -1;
+
+    char* tok = strtok(line, " ");
+    tok = strtok(NULL, " ");
+    tok = strtok(NULL, " .");
+
+    return atoi(tok);
+}
+
+block_t get_essid(int8_t* link_quality) {
     block_t block;
 
     // find wireless if address
@@ -216,6 +253,15 @@ block_t get_essid(int16_t* link_quality) {
         block.set_error("IF ERROR");
         return block;
     }
+
+    int8_t signal;
+
+    if ((signal=get_signal_strength(ifaddr)) == -1) {
+        block.set_error("SIGNAL ERROR");
+        return block;
+    }
+    *link_quality = signal;
+        
 
     int sockfd;
     char * id;
@@ -250,6 +296,8 @@ block_t get_essid(int16_t* link_quality) {
     close(sockfd);
     return block;
 }
+
+
 
 block_t get_datetime() {
     block_t block;
@@ -398,13 +446,13 @@ int main() {
         block_t battery = get_batt_level();
         block_t datetime = get_datetime();
 
-        int16_t link_quality;
+        int8_t link_quality;
         block_t essid = get_essid(&link_quality);
 
         printf("[\n");
         printf("%s,\n", volume.get_graph(colors.green, colors.gray));
         printf("%s,\n", battery.get_graph(colors.orange, colors.gray));
-        printf("%s,\n", essid.get_strgraph(colors.orange, colors.gray, 50));
+        printf("%s,\n", essid.get_strgraph(colors.orange, colors.gray, link_quality));
         printf("%s\n",  datetime.get(colors.gray));
         printf("],\n");
 
