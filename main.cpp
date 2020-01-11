@@ -1,45 +1,35 @@
-#include <time.h>
 #include <stdio.h>
 #include <stdint.h>
-#include <sys/statvfs.h>
 #include <unistd.h>
-
-#include <dirent.h>     // list dirs
-
-#include <alsa/asoundlib.h>
-
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
+
+#include <time.h>           // datetime info
+#include <sys/statvfs.h>    // fs info
+#include <dirent.h>         // battery info
+#include <alsa/asoundlib.h> // alsa master volume info
+
+// wireless
 #include <sys/ioctl.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/types.h> 
-#include <fcntl.h>
-#include <errno.h>
 #include <linux/wireless.h>
 
 // get network interfaces
-#include <sys/types.h>
 #include <ifaddrs.h>
-#include <linux/if_link.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
 #include <netdb.h>
 
-// pulseaudio (libpulse-dev)
-#include <pulse/simple.h>
-#include <pulse/error.h>
-#include <pulse/volume.h>
+#define BATT_PATH                   "/sys/class/power_supply"
+#define WIRELESS_PATH               "/proc/net/wireless"
+#define TIMEOUT                     3
+#define WIRELESS_STRENGTH_TRESHOLD  70
+#define BATTERY_TRESHOLD            10
 
-#define BATT_PATH "/sys/class/power_supply"
-#define WIRELESS_PATH "/proc/net/wireless"
-#define TIMEOUT 1
+
 
 struct colors_t {
-    const char orange[8] = "#ad6500";
-    const char gray[8]   = "#848484";
-    const char white[8]   = "#cccccc";
-    const char green[8]   = "#009900";
+    const char orange[8]    = "#ad6500";
+    const char gray[8]      = "#848484";
+    const char white[8]     = "#cccccc";
+    const char green[8]     = "#009900";
 } colors;
 
 struct block_t {
@@ -141,7 +131,7 @@ struct block_t {
 };
 
 
-uint8_t check_wireless(const char* ifname, char* protocol) {
+bool check_wireless(const char* ifname, char* protocol) {
     int sock = -1;
     struct iwreq pwrq;
     memset(&pwrq, 0, sizeof(pwrq));
@@ -208,12 +198,10 @@ uint16_t get_fs_total(const char* path) {
     return (stat.f_bsize * stat.f_blocks)/1024/1024/1024;
 }
 
-
 int8_t get_signal_strength(char* interface) {
     // exit if file doesn't exist
-    if (access(WIRELESS_PATH, F_OK ) == -1) {
+    if (access(WIRELESS_PATH, F_OK ) == -1)
         return -1;
-    }
 
     FILE *fp;
     char buffer[4];
@@ -227,6 +215,7 @@ int8_t get_signal_strength(char* interface) {
     size_t len = 0;
     char* line = NULL;
 
+    // get line containing interface name
     while (getline(&line, &len, fp) != -1) {
         if (strstr(line, interface))
             break;
@@ -237,10 +226,12 @@ int8_t get_signal_strength(char* interface) {
     if (line == NULL)
         return -1;
 
+    // split string and get 3rd element
     char* tok = strtok(line, " ");
     tok = strtok(NULL, " ");
     tok = strtok(NULL, " .");
 
+    // convert to integer
     return atoi(tok);
 }
 
@@ -297,8 +288,6 @@ block_t get_essid(int8_t* link_quality) {
     return block;
 }
 
-
-
 block_t get_datetime() {
     block_t block;
 
@@ -314,8 +303,6 @@ block_t get_batt_level() {
 
     char path[100] = {'\0'};
     char capacity_path[100] = {'\0'};
-    char status_path[100] = {'\0'};
-    char status[20] = {'\0'};
 
     strcpy(path, BATT_PATH);
 
@@ -338,18 +325,10 @@ block_t get_batt_level() {
 
     strcat(capacity_path, path);
     strcat(capacity_path, "/capacity");
-    strcat(status_path, path);
-    strcat(status_path, "/status");
-
 
     // exit if file doesn't exist
     if (access(capacity_path, F_OK ) == -1) {
         block.set_error("CAPACITY FILE ERROR");
-        return block;
-    }
-    // exit if file doesn't exist
-    if (access(status_path, F_OK ) == -1) {
-        block.set_error("STATUS FILE ERROR");
         return block;
     }
 
@@ -370,38 +349,8 @@ block_t get_batt_level() {
     return block;
 }
 
-block_t get_pavolume() {
-    block_t block;
 
-    pa_simple *s;
-    pa_sample_spec ss;
-    ss.format = PA_SAMPLE_S16NE;
-    ss.channels = 2;
-    ss.rate = 44100;
-    s = pa_simple_new(NULL,               // Use the default server.
-                      "I3Status",           // Our application's name.
-                      PA_STREAM_PLAYBACK,
-                      NULL,               // Use the default device.
-                      "Check",            // Description of our stream.
-                      &ss,                // Our sample format.
-                      NULL,               // Use default channel map
-                      NULL,               // Use default buffering attributes.
-                      NULL               // Ignore error code.
-                      );
-
-    pa_cvolume pa_cvolume;
-    char res[500] = {'\0'};
-    pa_cvolume_snprint(res, 500, &pa_cvolume);
-    printf("\n%s\n", res);
-    sleep(5);
-    pa_simple_free(s);
-
-    return block;
-}
-
-
-block_t get_alsa_volume()
-{
+block_t get_alsa_volume() {
     block_t block;
 
     long min, max;
@@ -442,17 +391,31 @@ int main() {
     print_header();
 
     while (1) {
+        const char* essid_color;
+        const char* battery_color;
+
+        int8_t link_quality;
+
         block_t volume = get_alsa_volume();
         block_t battery = get_batt_level();
         block_t datetime = get_datetime();
-
-        int8_t link_quality;
         block_t essid = get_essid(&link_quality);
 
+        if (link_quality >= WIRELESS_STRENGTH_TRESHOLD)
+            essid_color = colors.green;
+        else
+            essid_color = colors.orange;
+
+        if (atoi(battery.text) >= BATTERY_TRESHOLD)
+            battery_color = colors.green;
+        else
+            battery_color = colors.orange;
+
+
         printf("[\n");
+        printf("%s,\n", battery.get_graph(battery_color, colors.gray));
         printf("%s,\n", volume.get_graph(colors.green, colors.gray));
-        printf("%s,\n", battery.get_graph(colors.orange, colors.gray));
-        printf("%s,\n", essid.get_strgraph(colors.orange, colors.gray, link_quality));
+        printf("%s,\n", essid.get_strgraph(essid_color, colors.gray, link_quality));
         printf("%s\n",  datetime.get(colors.gray));
         printf("],\n");
 
