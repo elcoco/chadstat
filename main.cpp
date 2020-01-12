@@ -20,7 +20,7 @@
 #define BATT_PATH                   "/sys/class/power_supply"
 #define WIRELESS_PATH               "/proc/net/wireless"
 #define TIMEOUT                     3
-#define WIRELESS_STRENGTH_TRESHOLD  70
+#define WIRELESS_STRENGTH_TRESHOLD  65
 #define BATTERY_TRESHOLD            10
 
 
@@ -311,6 +311,7 @@ block_t get_batt_level() {
 
     if (dr == NULL) {
         block.set_error("DIR ERROR");
+        closedir(dr);
         return block;
     }
 
@@ -322,6 +323,8 @@ block_t get_batt_level() {
             break;
         }
     }
+
+    closedir(dr);
 
     strcat(capacity_path, path);
     strcat(capacity_path, "/capacity");
