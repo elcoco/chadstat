@@ -23,6 +23,7 @@
 #define WIRELESS_STRENGTH_TRESHOLD  65
 #define BATTERY_TRESHOLD            10
 
+uint8_t timeout = TIMEOUT;
 
 
 struct colors_t {
@@ -129,7 +130,6 @@ struct block_t {
         return fmt_text;
     }
 };
-
 
 bool check_wireless(const char* ifname, char* protocol) {
     int sock = -1;
@@ -352,7 +352,6 @@ block_t get_batt_level() {
     return block;
 }
 
-
 block_t get_alsa_volume() {
     block_t block;
 
@@ -390,9 +389,33 @@ void print_header() {
     printf("{ \"version\": 1 } \n[\n[],\n");
 }
 
-int main() {
-    print_header();
+void parse_args(int* argc, char** argv) {
+    char c;
 
+    while ((c=getopt(*argc, argv, "t:")) != -1) {
+        switch(c) {
+            case 't':
+                if ((timeout=atoi(optarg)) == 0) {
+                    printf("ERROR: invalid argument\n");
+                    break;
+                }
+        }
+    }
+
+    // optind is for the extra arguments 
+    // which are not parsed 
+    for(; optind < *argc; optind++){      
+        printf("unknown arguments: %s\n", argv[optind]);  
+    } 
+}
+
+int main(int argc, char **argv) {
+    parse_args(&argc, argv);
+
+
+
+    print_header();
+        
     while (1) {
         const char* essid_color;
         const char* battery_color;
@@ -423,7 +446,7 @@ int main() {
         printf("],\n");
 
         fflush(stdout);     // flush buffer
-        sleep(TIMEOUT);
+        sleep(timeout);
     }
 
     return 0;
