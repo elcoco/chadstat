@@ -389,30 +389,62 @@ void print_header() {
     printf("{ \"version\": 1 } \n[\n[],\n");
 }
 
+void show_usage() {
+    printf("USAGE:\n");
+    printf("  statusline -t <seconds>\n");
+}
+
 void parse_args(int* argc, char** argv) {
     char c;
+    bool do_exit = false;
 
-    while ((c=getopt(*argc, argv, "t:")) != -1) {
+    if (*argc < 2) {
+        printf("ERROR: no arguments given\n\n");
+        do_exit = true;
+    }
+
+    while ((c=getopt(*argc, argv, "ht:")) != -1) {
         switch(c) {
             case 't':
                 if ((timeout=atoi(optarg)) == 0) {
                     printf("ERROR: invalid argument\n");
-                    break;
+                    do_exit = true;
                 }
+                break;
+
+            case 'h':
+                do_exit = true;
+                break;
+
+            // for options not in optstring, and missing required arguments
+            case '?':       
+                do_exit = true;
+                break;
+
+            default:
+                do_exit = true;
+                printf("setting default\n");
+                break;
+
+                
         }
     }
 
     // optind is for the extra arguments 
     // which are not parsed 
-    for(; optind < *argc; optind++){      
-        printf("unknown arguments: %s\n", argv[optind]);  
+    for (; optind < *argc; optind++){      
+        printf("ERROR: unknown argument: %s\n", argv[optind]);  
+        do_exit = true;
     } 
+
+    if (do_exit) {
+        show_usage();
+        exit(0);
+    }
 }
 
 int main(int argc, char **argv) {
     parse_args(&argc, argv);
-
-
 
     print_header();
         
