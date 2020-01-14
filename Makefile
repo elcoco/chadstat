@@ -6,3 +6,6 @@ main.o: main.cpp
 
 clean:
 	rm *.o statusline
+
+install:
+	cp -f statusline ~/bin/apps
