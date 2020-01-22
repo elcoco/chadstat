@@ -22,8 +22,26 @@
 #define TIMEOUT                     3
 #define WIRELESS_STRENGTH_TRESHOLD  65
 #define BATTERY_TRESHOLD            10
+#define DATETIME_FMT                "%A %d:%m:%Y %H:%M"
 
-uint8_t timeout = TIMEOUT;
+uint8_t timeout = TIMEOUT;      // seconds between updates
+
+
+// check time differences
+struct t_delta_t {
+    uint32_t t_prev = time(NULL);
+
+    // return true when seconds have elapsed, reset timer
+    bool has_elapsed(uint16_t seconds) {
+        uint32_t t_cur = time(NULL);
+        if ((t_cur - t_prev) > seconds) {
+            t_prev = t_cur;
+            return true;
+        }
+        return false;
+    }
+} t_test;
+
 
 
 struct colors_t {
@@ -31,6 +49,7 @@ struct colors_t {
     const char gray[8]      = "#848484";
     const char white[8]     = "#cccccc";
     const char green[8]     = "#009900";
+    const char red[8]     = "#F92672";
 } colors;
 
 struct block_t {
@@ -77,7 +96,7 @@ struct block_t {
             r_text[i] = graph_chr2;
         }
 
-        // handle case where level is maximum length, second line would be skipped and screw up spacing between blocks (see i3 input protocol)
+        // handle case where level is maximum length, second line would be empty and therefore skipped and screw up spacing between blocks (see i3 input protocol)
         if (level == length) {
             sprintf(l_fmt, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": %d}", l_text, color1, sep_block_width);
             sprintf(fmt_text, "%s", l_fmt);
@@ -290,11 +309,9 @@ block_t get_essid(int8_t* link_quality) {
 
 block_t get_datetime() {
     block_t block;
-
     time_t t = time(NULL);            // 32bit integer representing time
     struct tm tm = *localtime(&t);    // get struct with time data
-    strftime(block.text, 100,"%A %d:%m:%Y %H:%M",&tm);
-
+    strftime(block.text, 100, DATETIME_FMT, &tm);
     return block;
 }
 
@@ -449,6 +466,8 @@ int main(int argc, char **argv) {
     print_header();
         
     while (1) {
+        //printf("TDIFF: %d\n", t_test.has_elapsed(5));
+
         const char* essid_color;
         const char* battery_color;
 
@@ -472,7 +491,7 @@ int main(int argc, char **argv) {
 
         printf("[\n");
         printf("%s,\n", battery.get_graph(battery_color, colors.gray));
-        printf("%s,\n", volume.get_graph(colors.green, colors.gray));
+        printf("%s,\n", volume.get_graph(colors.red, colors.gray));
         printf("%s,\n", essid.get_strgraph(essid_color, colors.gray, link_quality));
         printf("%s\n",  datetime.get(colors.gray));
         printf("],\n");
