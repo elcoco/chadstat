@@ -42,8 +42,8 @@ site_t sites[] = {
     {"https://api.monutor.com",         'A', 404},
     {"https://dashboard.monutor.com",   'D', 200},
     {"https://rocketchat.monutor.com",  'R', 200},
+    {"https://httpstat.us/200?sleep=2000",  'D', 200},
     {"https://monutor.com",             'M', 200},
     {"https://nc.freeradical.nl",       'N', 200},
-    //{"https://httpstat.us/200?sleep=2000",  'D', 200},
 };
 

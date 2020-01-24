@@ -55,6 +55,8 @@ struct block_t {
     char    graph_chr1 = '|';
     char    graph_chr2 = '|';
 
+    char color1[8] = {'\0'};
+
     bool is_error = false;
 
     bool is_def() {
@@ -67,9 +69,14 @@ struct block_t {
         strcpy(text, error);
     }
 
-    char* get(const char* color, bool sep=1) {
-        uint8_t sep_block_width = sep ? 20 : 0;
-        sprintf(fmt_text, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": %d}", text, color, sep_block_width);
+    char* get(const char* color, int8_t sep=-1) {
+        if (strlen(color1) == 8)
+            sprintf(color1, "%s", color);
+        if (sep != -1)
+            separator = sep;
+            
+        uint8_t sep_block_width = separator ? 20 : 0;
+        sprintf(fmt_text, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": %d}", text, color1, sep_block_width);
         return fmt_text;
     }
 
@@ -489,37 +496,30 @@ uint8_t do_request(const char* url, uint16_t res_code) {
 }
 
 
-void get_sites_up(site_t sites[], uint8_t length, block_t& block_up, block_t& block_down, block_t& block_timedout) {
+void get_sites_up(site_t* sites, block_t* blocks, uint8_t length, const char* c_up, const char* c_timeout, const char* c_down) {
+    // return if a check is not due
     if (!t_http.has_elapsed(HTTP_CHECK_SECONDS))
         return;
 
-    char up[length+1]       = {'\0'};
-    char down[length+1]     = {'\0'};
-    char timedout[length+1] = {'\0'};
-
-    char* pup = up;
-    char* pdown = down;
-    char* ptimedout = timedout;
-
     for (uint8_t i=0 ; i<length ; i++) {
-        uint8_t res = do_request(sites[i].url, sites[i].res_code);
+        site_t*  site  = &sites[i];
+        block_t* block = &blocks[i];
+        sprintf(block->text, "%c", site->id);
+
+        // last block should have a spacer
+        block->separator = (i == length-1) ? 1 : 0;
+
+        uint8_t res = do_request(site->url, site->res_code);
         if (res == HTTP_TIMEDOUT) {
-            *ptimedout = sites[i].id;
-            ptimedout++;
+            strcpy(block->color1, c_timeout);
         }
         else if (res == HTTP_SUCCESS) {
-            *pup = sites[i].id;
-            pup++;
+            strcpy(block->color1, c_up);
         }
         else {
-            *pdown = sites[i].id;
-            pdown++;
+            strcpy(block->color1, c_down);
         }
     }
-
-    sprintf(block_up.text, "%s", up);
-    sprintf(block_down.text, "%s", down);
-    sprintf(block_timedout.text, "%s", timedout);
 }
 
 
@@ -527,9 +527,8 @@ int main(int argc, char **argv) {
     parse_args(&argc, argv);
     print_header();
         
-    block_t sites_up;
-    block_t sites_down;
-    block_t sites_timedout;
+    uint8_t sites_len = sizeof(sites)/sizeof(sites[0]);
+    block_t site_blocks[sites_len];
 
     while (1) {
         const char* essid_color;
@@ -537,7 +536,7 @@ int main(int argc, char **argv) {
 
         int8_t link_quality;
 
-        get_sites_up(sites, sizeof(sites)/sizeof(sites[0]), sites_up, sites_down, sites_timedout);
+        get_sites_up(sites, site_blocks, sites_len, colors.green, colors.orange, colors.red);
 
         block_t volume = get_alsa_volume();
         block_t battery = get_batt_level();
@@ -555,12 +554,11 @@ int main(int argc, char **argv) {
             battery_color = colors.orange;
 
 
-        //printf(">>>%d<<<\n", sites_timedout.is_def());
-
         printf("[\n");
-        printf("%s,\n", sites_up.get(colors.green,        (sites_timedout.is_def() || sites_down.is_def()) ? 0 : 1));
-        printf("%s,\n", sites_timedout.get(colors.orange, !sites_down.is_def()));
-        printf("%s,\n", sites_down.get(colors.red));
+
+        for (block_t block: site_blocks)
+            printf("%s,\n", block.get(NULL));
+
         printf("%s,\n", battery.get_graph(battery_color, colors.gray));
         printf("%s,\n", volume.get_graph(colors.red, colors.gray));
         printf("%s,\n", essid.get_strgraph(essid_color, colors.gray, link_quality));
