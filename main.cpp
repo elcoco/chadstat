@@ -52,10 +52,10 @@ struct block_t {
     char fmt_text[300] = {'\0'};
     bool separator = 1;
 
-    char    graph_chr1 = '|';
-    char    graph_chr2 = '|';
+    char graph_chr1 = '|';
+    char graph_chr2 = '|';
 
-    char color1[8];
+    char color1[8] = {'\0'};
 
     bool is_error = false;
 
@@ -69,11 +69,11 @@ struct block_t {
         strcpy(text, error);
     }
 
-    char* get(const char* color, int8_t sep=-1) {
-        if (strlen(color1) == 8)
-            sprintf(color1, "%s", color);
-        if (sep != -1)
-            separator = sep;
+    char* get(const char* color, bool sep=1) {
+        if (strlen(color1) != 7)
+            strcpy(color1, color);
+        if (!sep)
+            separator = true;
             
         uint8_t sep_block_width = separator ? 20 : 0;
         sprintf(fmt_text, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": %d}", text, color1, sep_block_width);
@@ -549,7 +549,7 @@ int main(int argc, char **argv) {
             printf("%s,\n", block.get(NULL));
 
         printf("%s,\n", battery.get_graph(battery_color, colors.gray));
-        printf("%s,\n", volume.get_graph(colors.red, colors.gray));
+        printf("%s,\n", volume.get_graph(colors.orange, colors.gray));
         printf("%s,\n", essid.get_strgraph(essid_color, colors.gray, link_quality));
         printf("%s\n",  datetime.get(colors.gray));
         printf("],\n");
