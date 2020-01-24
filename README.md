@@ -16,4 +16,4 @@ bar {
 
 ## Configuration
 ```
-Edit config in ```config.h``` and recompile
+Edit config in ``config.h`` and recompile
