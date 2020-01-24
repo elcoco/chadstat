@@ -494,7 +494,7 @@ void get_sites_up(site_t* sites, block_t* blocks, uint8_t length, const char* c_
     for (uint8_t i=0 ; i<length ; i++) {
         site_t*  site  = &sites[i];
         block_t* block = &blocks[i];
-        sprintf(block->text, "%c", site->id);
+        sprintf(block->text, "%s", site->id);
 
         // last block should have a spacer
         block->separator = (i == length-1) ? 1 : 0;
@@ -510,7 +510,6 @@ void get_sites_up(site_t* sites, block_t* blocks, uint8_t length, const char* c_
             strcpy(block->color1, c_down);
     }
 }
-
 
 int main(int argc, char **argv) {
     parse_args(&argc, argv);

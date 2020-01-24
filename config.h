@@ -25,19 +25,16 @@ struct colors_t {
 
 struct site_t {
     const char* url;
-    char id;
+    const char* id;
     long res_code;       // expected response code
 };
 
 site_t sites[] = {
 //   URL                                ID   EXPECTED STATUS CODE
-    {"https://api.moutor.com",          'A', 404},
-    {"https://api.monutor.com",         'A', 404},
-    {"https://dashboard.monutor.com",   'D', 200},
-    {"https://rocketchat.monutor.com",  'R', 200},
-    {"https://httpstat.us/200?sleep=2000",  'D', 200},
-    {"https://monutor.com",             'M', 200},
-    {"https://api.moor.com",          'A', 404},
-    {"https://nc.freeradical.nl",       'N', 200},
+    {"https://monutor.com",             "Mo", 200},
+    {"https://api.monutor.com",         "Api", 404},
+    {"https://dashboard.monutor.com",   "Da", 200},
+    {"https://rocketchat.monutor.com",  "Rc", 200},
+    {"https://nc.freeradical.nl",       "Nc", 200},
 };
 
