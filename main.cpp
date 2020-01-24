@@ -4,6 +4,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <curl/curl.h>      // sites up?
+
 #include <time.h>           // datetime info
 #include <sys/statvfs.h>    // fs info
 #include <dirent.h>         // battery info
@@ -24,8 +26,19 @@
 #define BATTERY_TRESHOLD            10
 #define DATETIME_FMT                "%A %d:%m:%Y %H:%M"
 
+#define HTTP_SUCCESS    0
+#define HTTP_TIMEDOUT   1
+#define HTTP_DOWN       2
+#define HTTP_ERROR      3
+
 uint8_t timeout = TIMEOUT;      // seconds between updates
 
+
+struct site_t {
+    const char* url;
+    char id;
+    uint16_t res_code;       // expected response code
+} sites[5];
 
 // check time differences
 struct t_delta_t {
@@ -41,8 +54,6 @@ struct t_delta_t {
         return false;
     }
 } t_test;
-
-
 
 struct colors_t {
     const char orange[8]    = "#ad6500";
@@ -150,6 +161,9 @@ struct block_t {
     }
 };
 
+
+
+
 bool check_wireless(const char* ifname, char* protocol) {
     int sock = -1;
     struct iwreq pwrq;
@@ -253,6 +267,65 @@ int8_t get_signal_strength(char* interface) {
     // convert to integer
     return atoi(tok);
 }
+
+void print_header() {
+    printf("{ \"version\": 1 } \n[\n[],\n");
+}
+
+void show_usage() {
+    printf("USAGE:\n");
+    printf("  statusline -t <seconds>\n");
+}
+
+void parse_args(int* argc, char** argv) {
+    char c;
+    bool do_exit = false;
+
+    if (*argc < 2) {
+        printf("ERROR: no arguments given\n\n");
+        do_exit = true;
+    }
+
+    while ((c=getopt(*argc, argv, "ht:")) != -1) {
+        switch(c) {
+            case 't':
+                if ((timeout=atoi(optarg)) == 0) {
+                    printf("ERROR: invalid argument\n");
+                    do_exit = true;
+                }
+                break;
+
+            case 'h':
+                do_exit = true;
+                break;
+
+            // for options not in optstring, and missing required arguments
+            case '?':       
+                do_exit = true;
+                break;
+
+            default:
+                do_exit = true;
+                printf("setting default\n");
+                break;
+
+                
+        }
+    }
+
+    // optind is for the extra arguments 
+    // which are not parsed 
+    for (; optind < *argc; optind++){      
+        printf("ERROR: unknown argument: %s\n", argv[optind]);  
+        do_exit = true;
+    } 
+
+    if (do_exit) {
+        show_usage();
+        exit(0);
+    }
+}
+
 
 block_t get_essid(int8_t* link_quality) {
     block_t block;
@@ -402,65 +475,75 @@ block_t get_alsa_volume() {
     return block;
 }
 
-void print_header() {
-    printf("{ \"version\": 1 } \n[\n[],\n");
-}
+uint8_t do_request(const char* url, uint16_t res_code) {
+    long response_code;
 
-void show_usage() {
-    printf("USAGE:\n");
-    printf("  statusline -t <seconds>\n");
-}
+    CURL *curl = curl_easy_init();
+    if(curl) {
+        CURLcode res;
+        curl_easy_setopt(curl, CURLOPT_URL, url);
+        curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 1L);
 
-void parse_args(int* argc, char** argv) {
-    char c;
-    bool do_exit = false;
+        res = curl_easy_perform(curl);
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+        curl_easy_cleanup(curl);
 
-    if (*argc < 2) {
-        printf("ERROR: no arguments given\n\n");
-        do_exit = true;
+        // check returned response code against expected response code
+        if (response_code == res_code)
+            return HTTP_SUCCESS;
+        else if (res == CURLE_OPERATION_TIMEDOUT)
+            return HTTP_TIMEDOUT;
+        else
+            return HTTP_DOWN;
     }
 
-    while ((c=getopt(*argc, argv, "ht:")) != -1) {
-        switch(c) {
-            case 't':
-                if ((timeout=atoi(optarg)) == 0) {
-                    printf("ERROR: invalid argument\n");
-                    do_exit = true;
-                }
-                break;
+    printf("curl has error\n");
+    return HTTP_ERROR;
+}
 
-            case 'h':
-                do_exit = true;
-                break;
+block_t get_sites_up(site_t sites[], uint8_t length) {
+    block_t block;
+    char site_str[length+1] = {'\0'};
+    char down[length+1]     = {'\0'};
+    char timedout[length+1] = {'\0'};
 
-            // for options not in optstring, and missing required arguments
-            case '?':       
-                do_exit = true;
-                break;
+    char* pdown = down;
+    char* ptimedout = timedout;
 
-            default:
-                do_exit = true;
-                printf("setting default\n");
-                break;
+    for (uint8_t i=0 ; i<length ; i++)
+        site_str[i] = sites[i].id;
 
-                
+    for (uint8_t i=0 ; i<length ; i++) {
+        uint8_t res = do_request(sites[i].url, sites[i].res_code);
+        if (res == HTTP_TIMEDOUT) {
+            *ptimedout = sites[i].id;
+            ptimedout++;
         }
+        else if (res != HTTP_SUCCESS) {
+            *pdown = sites[i].id;
+            pdown++;
+        }
+
     }
 
-    // optind is for the extra arguments 
-    // which are not parsed 
-    for (; optind < *argc; optind++){      
-        printf("ERROR: unknown argument: %s\n", argv[optind]);  
-        do_exit = true;
-    } 
-
-    if (do_exit) {
-        show_usage();
-        exit(0);
-    }
+    printf("sitestr: %s\n", site_str);
+    printf("down: %s\n", down);
+    printf("timedout: %s\n", timedout);
+    return block;
 }
+
 
 int main(int argc, char **argv) {
+    sites[0] = {"https://api.monutor.com", 'A', 404};
+    sites[1] = {"https://alkpi.monutor.com", 'B', 404};
+    sites[2] = {"https://asspi.monutor.com", 'C', 404};
+    sites[3] = {"https://httpstat.us/200?sleep=2000", 'D', 200};
+    sites[4] = {"https://httpstat.us/200?sleep=2000", 'E', 200};
+
+    block_t sitesup = get_sites_up(sites, 5);
+
     parse_args(&argc, argv);
 
     print_header();
