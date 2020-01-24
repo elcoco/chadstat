@@ -468,9 +468,7 @@ block_t get_alsa_volume() {
     return block;
 }
 
-uint8_t do_request(const char* url, uint16_t res_code) {
-    long response_code;
-
+int8_t do_request(const char* url, long& response_code) {
     CURL *curl = curl_easy_init();
     if(curl) {
         CURLcode res;
@@ -482,17 +480,9 @@ uint8_t do_request(const char* url, uint16_t res_code) {
         res = curl_easy_perform(curl);
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
         curl_easy_cleanup(curl);
-
-        // check returned response code against expected response code
-        if (response_code == res_code)
-            return HTTP_SUCCESS;
-        else if (res == CURLE_OPERATION_TIMEDOUT)
-            return HTTP_TIMEDOUT;
-        else
-            return HTTP_DOWN;
+        return res;
     }
-
-    return HTTP_ERROR;
+    return -1;
 }
 
 
@@ -509,16 +499,15 @@ void get_sites_up(site_t* sites, block_t* blocks, uint8_t length, const char* c_
         // last block should have a spacer
         block->separator = (i == length-1) ? 1 : 0;
 
-        uint8_t res = do_request(site->url, site->res_code);
-        if (res == HTTP_TIMEDOUT) {
-            strcpy(block->color1, c_timeout);
-        }
-        else if (res == HTTP_SUCCESS) {
+        long response_code;
+        uint8_t res = do_request(site->url, response_code);
+        
+        if (res == CURLE_OK && site->res_code == response_code)
             strcpy(block->color1, c_up);
-        }
-        else {
+        else if (res == CURLE_OPERATION_TIMEDOUT)
+            strcpy(block->color1, c_timeout);
+        else
             strcpy(block->color1, c_down);
-        }
     }
 }
 

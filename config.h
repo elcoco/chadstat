@@ -15,14 +15,6 @@
 #define BATT_PATH                   "/sys/class/power_supply"
 #define WIRELESS_PATH               "/proc/net/wireless"
 
-// error codes, don't change
-#define HTTP_SUCCESS    0
-#define HTTP_TIMEDOUT   1
-#define HTTP_DOWN       2
-#define HTTP_ERROR      3
-
-
-
 struct colors_t {
     const char orange[8]    = "#ad6500";
     const char gray[8]      = "#848484";
@@ -34,7 +26,7 @@ struct colors_t {
 struct site_t {
     const char* url;
     char id;
-    uint16_t res_code;       // expected response code
+    long res_code;       // expected response code
 };
 
 site_t sites[] = {
