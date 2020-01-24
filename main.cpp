@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <stdio.h>
 #include <stdint.h>
 #include <unistd.h>
@@ -19,49 +21,31 @@
 #include <ifaddrs.h>
 #include <netdb.h>
 
-#define BATT_PATH                   "/sys/class/power_supply"
-#define WIRELESS_PATH               "/proc/net/wireless"
-#define TIMEOUT                     3
-#define WIRELESS_STRENGTH_TRESHOLD  65
-#define BATTERY_TRESHOLD            10
-#define DATETIME_FMT                "%A %d:%m:%Y %H:%M"
-
-#define HTTP_SUCCESS    0
-#define HTTP_TIMEDOUT   1
-#define HTTP_DOWN       2
-#define HTTP_ERROR      3
 
 uint8_t timeout = TIMEOUT;      // seconds between updates
 
-
-struct site_t {
-    const char* url;
-    char id;
-    uint16_t res_code;       // expected response code
-} sites[5];
-
 // check time differences
 struct t_delta_t {
-    uint32_t t_prev = time(NULL);
+    uint32_t t_prev     = time(NULL);
+    bool     first_run  = true;
 
     // return true when seconds have elapsed, reset timer
     bool has_elapsed(uint16_t seconds) {
         uint32_t t_cur = time(NULL);
+
+        if (first_run) {
+            t_prev = t_cur;
+            first_run = false;
+            return true;
+        }
+
         if ((t_cur - t_prev) > seconds) {
             t_prev = t_cur;
             return true;
         }
         return false;
     }
-} t_test;
-
-struct colors_t {
-    const char orange[8]    = "#ad6500";
-    const char gray[8]      = "#848484";
-    const char white[8]     = "#cccccc";
-    const char green[8]     = "#009900";
-    const char red[8]     = "#F92672";
-} colors;
+} t_http;
 
 struct block_t {
     char text[50] = {'\0'};
@@ -73,14 +57,18 @@ struct block_t {
 
     bool is_error = false;
 
+    bool is_def() {
+        return (strlen(text) == 0) ? 0 : 1;
+    }
+
     // indicate whether there was an error or not, graphs shouldn't be displayed in case of an error
     void set_error(const char* error) {
         is_error = true;
         strcpy(text, error);
     }
 
-    char* get(const char* color) {
-        uint8_t sep_block_width = separator ? 20 : 0;
+    char* get(const char* color, bool sep=1) {
+        uint8_t sep_block_width = sep ? 20 : 0;
         sprintf(fmt_text, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": %d}", text, color, sep_block_width);
         return fmt_text;
     }
@@ -160,8 +148,6 @@ struct block_t {
         return fmt_text;
     }
 };
-
-
 
 
 bool check_wireless(const char* ifname, char* protocol) {
@@ -484,7 +470,7 @@ uint8_t do_request(const char* url, uint16_t res_code) {
         curl_easy_setopt(curl, CURLOPT_URL, url);
         curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
         curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 1L);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, HTTP_MAX_TIMEOUT);
 
         res = curl_easy_perform(curl);
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
@@ -499,21 +485,21 @@ uint8_t do_request(const char* url, uint16_t res_code) {
             return HTTP_DOWN;
     }
 
-    printf("curl has error\n");
     return HTTP_ERROR;
 }
 
-block_t get_sites_up(site_t sites[], uint8_t length) {
-    block_t block;
-    char site_str[length+1] = {'\0'};
+
+void get_sites_up(site_t sites[], uint8_t length, block_t& block_up, block_t& block_down, block_t& block_timedout) {
+    if (!t_http.has_elapsed(HTTP_CHECK_SECONDS))
+        return;
+
+    char up[length+1]       = {'\0'};
     char down[length+1]     = {'\0'};
     char timedout[length+1] = {'\0'};
 
+    char* pup = up;
     char* pdown = down;
     char* ptimedout = timedout;
-
-    for (uint8_t i=0 ; i<length ; i++)
-        site_str[i] = sites[i].id;
 
     for (uint8_t i=0 ; i<length ; i++) {
         uint8_t res = do_request(sites[i].url, sites[i].res_code);
@@ -521,40 +507,37 @@ block_t get_sites_up(site_t sites[], uint8_t length) {
             *ptimedout = sites[i].id;
             ptimedout++;
         }
-        else if (res != HTTP_SUCCESS) {
+        else if (res == HTTP_SUCCESS) {
+            *pup = sites[i].id;
+            pup++;
+        }
+        else {
             *pdown = sites[i].id;
             pdown++;
         }
-
     }
 
-    printf("sitestr: %s\n", site_str);
-    printf("down: %s\n", down);
-    printf("timedout: %s\n", timedout);
-    return block;
+    sprintf(block_up.text, "%s", up);
+    sprintf(block_down.text, "%s", down);
+    sprintf(block_timedout.text, "%s", timedout);
 }
 
 
 int main(int argc, char **argv) {
-    sites[0] = {"https://api.monutor.com", 'A', 404};
-    sites[1] = {"https://alkpi.monutor.com", 'B', 404};
-    sites[2] = {"https://asspi.monutor.com", 'C', 404};
-    sites[3] = {"https://httpstat.us/200?sleep=2000", 'D', 200};
-    sites[4] = {"https://httpstat.us/200?sleep=2000", 'E', 200};
-
-    block_t sitesup = get_sites_up(sites, 5);
-
     parse_args(&argc, argv);
-
     print_header();
         
-    while (1) {
-        //printf("TDIFF: %d\n", t_test.has_elapsed(5));
+    block_t sites_up;
+    block_t sites_down;
+    block_t sites_timedout;
 
+    while (1) {
         const char* essid_color;
         const char* battery_color;
 
         int8_t link_quality;
+
+        get_sites_up(sites, sizeof(sites)/sizeof(sites[0]), sites_up, sites_down, sites_timedout);
 
         block_t volume = get_alsa_volume();
         block_t battery = get_batt_level();
@@ -572,7 +555,12 @@ int main(int argc, char **argv) {
             battery_color = colors.orange;
 
 
+        //printf(">>>%d<<<\n", sites_timedout.is_def());
+
         printf("[\n");
+        printf("%s,\n", sites_up.get(colors.green,        (sites_timedout.is_def() || sites_down.is_def()) ? 0 : 1));
+        printf("%s,\n", sites_timedout.get(colors.orange, !sites_down.is_def()));
+        printf("%s,\n", sites_down.get(colors.red));
         printf("%s,\n", battery.get_graph(battery_color, colors.gray));
         printf("%s,\n", volume.get_graph(colors.red, colors.gray));
         printf("%s,\n", essid.get_strgraph(essid_color, colors.gray, link_quality));
