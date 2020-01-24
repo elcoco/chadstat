@@ -55,7 +55,7 @@ struct block_t {
     char    graph_chr1 = '|';
     char    graph_chr2 = '|';
 
-    char color1[8] = {'\0'};
+    char color1[8];
 
     bool is_error = false;
 
