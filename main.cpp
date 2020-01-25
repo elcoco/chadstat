@@ -21,8 +21,7 @@
 #include <ifaddrs.h>
 #include <netdb.h>
 
-
-uint8_t timeout = TIMEOUT;      // seconds between updates
+uint8_t timeout;
 
 // check time differences
 struct t_delta_t {
@@ -45,17 +44,19 @@ struct t_delta_t {
         }
         return false;
     }
-} t_http;
+} t_volume, t_datetime, t_http, t_wireless, t_battery;
 
 struct block_t {
     char text[50] = {'\0'};
     char fmt_text[300] = {'\0'};
+    char last_fmt_text[300] = {'\0'};    // contains a backup of text, gets updated on get*() functions
     bool separator = 1;
 
     char graph_chr1 = '|';
     char graph_chr2 = '|';
 
     char color1[8] = {'\0'};
+    char color2[8] = {'\0'};
 
     bool is_error = false;
 
@@ -69,20 +70,27 @@ struct block_t {
         strcpy(text, error);
     }
 
-    char* get(const char* color, bool sep=1) {
-        if (strlen(color1) != 7)
-            strcpy(color1, color);
+    bool has_changed() {
+        return (strcmp(last_fmt_text, fmt_text) == 0) ? false : true;
+    }
+
+    bool get(bool sep=1) {
         if (!sep)
             separator = true;
             
         uint8_t sep_block_width = separator ? 20 : 0;
         sprintf(fmt_text, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": %d}", text, color1, sep_block_width);
-        return fmt_text;
+
+        if (has_changed()) {
+            strcpy(last_fmt_text, fmt_text);
+            return true;
+        }
+        return false;
     }
 
-    char* get_graph(const char* color1, const char* color2, uint8_t length=20) {
+    bool get_graph(uint8_t length=20) {
         if (is_error)
-            return get(color1);
+            return get();
 
         uint8_t percent = atoi(text);
         if (percent > 100)
@@ -112,13 +120,16 @@ struct block_t {
             sprintf(r_fmt, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": %d}", r_text, color2, sep_block_width);
             sprintf(fmt_text, "%s,\n%s", l_fmt, r_fmt);
         }
-
-        return fmt_text;
+        if (has_changed()) {
+            strcpy(last_fmt_text, fmt_text);
+            return true;
+        }
+        return false;
     }
 
-    char* get_strgraph(const char* color1, const char* color2, uint8_t percent) {
+    bool get_strgraph(uint8_t percent) {
         if (is_error)
-            return get(color1);
+            return get();
 
         if (percent > 100)
             percent = 100;
@@ -152,7 +163,11 @@ struct block_t {
             sprintf(r_fmt, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": %d}", r_text, color2, sep_block_width);
             sprintf(fmt_text, "%s,\n%s", l_fmt, r_fmt);
         }
-        return fmt_text;
+        if (has_changed()) {
+            strcpy(last_fmt_text, fmt_text);
+            return true;
+        }
+        return false;
     }
 };
 
@@ -266,8 +281,8 @@ void print_header() {
 }
 
 void show_usage() {
-    printf("USAGE:\n");
-    printf("  statusline -t <seconds>\n");
+    printf("I3 status line, © 2020 spambaconspam, see LICENSE for details\n");
+    printf("usage: statusline [-t seconds] [-h]\n");
 }
 
 void parse_args(int* argc, char** argv) {
@@ -320,25 +335,25 @@ void parse_args(int* argc, char** argv) {
 }
 
 
-block_t get_essid(int8_t* link_quality) {
-    block_t block;
+void get_essid(block_t& block, int8_t* link_quality) {
+    if (!t_wireless.has_elapsed(WIRELESS_CHECK_SECONDS))
+        return;
 
     // find wireless if address
     char ifaddr[20] = {'\0'};
     if (get_ifaddr(ifaddr) == -1){
         block.set_error("IF ERROR");
-        return block;
+        return;
     }
 
     int8_t signal;
 
     if ((signal=get_signal_strength(ifaddr)) == -1) {
         block.set_error("SIGNAL ERROR");
-        return block;
+        return;
     }
     *link_quality = signal;
         
-
     int sockfd;
     char * id;
     id = new char[IW_ESSID_MAX_SIZE+1];
@@ -349,11 +364,10 @@ block_t get_essid(int8_t* link_quality) {
 
     strcpy(wreq.ifr_name, ifaddr);
 
-
     if((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
         block.set_error("SOCKET ERROR");
         close(sockfd);
-        return block;
+        return;
     }
 
     // ioctl manipulates device parameters of special files
@@ -370,24 +384,25 @@ block_t get_essid(int8_t* link_quality) {
         }
     }
     close(sockfd);
-    return block;
 }
 
-block_t get_datetime() {
-    block_t block;
+void get_datetime(block_t& block) {
+    if (!t_datetime.has_elapsed(DATETIME_CHECK_SECONDS))
+        return;
+
     time_t t = time(NULL);            // 32bit integer representing time
     struct tm tm = *localtime(&t);    // get struct with time data
     strftime(block.text, 100, DATETIME_FMT, &tm);
-    return block;
 }
 
-block_t get_batt_level() {
-    block_t block;
+void get_batt_level(block_t& block) {
+    if (!t_battery.has_elapsed(BATTERY_CHECK_SECONDS))
+        return;
 
     char path[100] = {'\0'};
     char capacity_path[100] = {'\0'};
 
-    strcpy(path, BATT_PATH);
+    strcpy(path, BATTERY_PATH);
 
     struct dirent *de;  // Pointer for directory entry 
     DIR *dr = opendir(path);
@@ -395,7 +410,7 @@ block_t get_batt_level() {
     if (dr == NULL) {
         block.set_error("DIR ERROR");
         closedir(dr);
-        return block;
+        return;
     }
 
     // find dir containing BAT*
@@ -415,7 +430,7 @@ block_t get_batt_level() {
     // exit if file doesn't exist
     if (access(capacity_path, F_OK ) == -1) {
         block.set_error("CAPACITY FILE ERROR");
-        return block;
+        return;
     }
 
     FILE *fp;
@@ -432,11 +447,12 @@ block_t get_batt_level() {
     strtok(block.text, "\n");
 
     fclose(fp);
-    return block;
+    return;
 }
 
-block_t get_alsa_volume() {
-    block_t block;
+void get_alsa_volume(block_t& block) {
+    if (!t_volume.has_elapsed(VOLUME_CHECK_SECONDS))
+        return;
 
     long min, max;
     long level;
@@ -465,7 +481,7 @@ block_t get_alsa_volume() {
     sprintf(block.text, "%d", volume);
 
     snd_mixer_close(handle);
-    return block;
+    return;
 }
 
 int8_t do_request(const char* url, long& response_code) {
@@ -518,42 +534,59 @@ int main(int argc, char **argv) {
     uint8_t sites_len = sizeof(sites)/sizeof(sites[0]);
     block_t site_blocks[sites_len];
 
-    while (1) {
-        const char* essid_color;
-        const char* battery_color;
+    block_t volume;
+    block_t battery;
+    block_t datetime;
+    block_t essid;
 
+    strcpy(volume.color1,   volume_color1);
+    strcpy(volume.color2,   volume_color2);
+    strcpy(battery.color2,  battery_color2);
+    strcpy(essid.color2,    wireless_color2);
+    strcpy(datetime.color1, datetime_color1);
+
+    while (1) {
         int8_t link_quality;
 
         get_sites_up(sites, site_blocks, sites_len, colors.green, colors.orange, colors.red);
 
-        block_t volume = get_alsa_volume();
-        block_t battery = get_batt_level();
-        block_t datetime = get_datetime();
-        block_t essid = get_essid(&link_quality);
+        get_alsa_volume(volume);
+        get_batt_level(battery);
+        get_datetime(datetime);
+        get_essid(essid, &link_quality);
 
-        if (link_quality >= WIRELESS_STRENGTH_TRESHOLD)
-            essid_color = colors.green;
-        else
-            essid_color = colors.orange;
-
-        if (atoi(battery.text) >= BATTERY_TRESHOLD)
-            battery_color = colors.green;
-        else
-            battery_color = colors.orange;
+        strcpy(essid.color1, (link_quality >= WIRELESS_STRENGTH_TRESHOLD) ? wireless_color1_good : wireless_color1_bad);
+        strcpy(battery.color1, (atoi(battery.text) >= BATTERY_TRESHOLD) ? battery_color1_normal : battery_color1_critical);
 
 
-        printf("[\n");
+        // only update when changes are made
+        bool changed = false;
 
-        for (block_t block: site_blocks)
-            printf("%s,\n", block.get(NULL));
+        for (block_t& block: site_blocks)
+            if (block.get())
+                changed = true;
 
-        printf("%s,\n", battery.get_graph(battery_color, colors.gray));
-        printf("%s,\n", volume.get_graph(colors.orange, colors.gray));
-        printf("%s,\n", essid.get_strgraph(essid_color, colors.gray, link_quality));
-        printf("%s\n",  datetime.get(colors.gray));
-        printf("],\n");
+        if (battery.get_graph()) changed = true;
+        if (volume.get_graph()) changed = true;
+        if (essid.get_strgraph(link_quality)) changed = true;
+        if (datetime.get()) changed = true;
 
-        fflush(stdout);     // flush buffer
+
+        if (changed) {
+            printf("[\n");
+
+            for (block_t& block: site_blocks)
+                printf("%s,\n", block.fmt_text);
+
+            printf("%s,\n", battery.fmt_text);
+            printf("%s,\n", volume.fmt_text);
+            printf("%s,\n", essid.fmt_text);
+            printf("%s\n",  datetime.fmt_text);
+            printf("],\n");
+
+            fflush(stdout);     // flush buffer
+        }
+
         sleep(timeout);
     }
 
