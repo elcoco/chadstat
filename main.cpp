@@ -23,6 +23,12 @@
 
 uint8_t timeout;
 
+enum block_type_t {
+    TEXT,
+    GRAPH,
+    STR_GRAPH
+} block_type;
+
 // check time differences
 struct t_delta_t {
     uint32_t t_prev     = time(NULL);
@@ -52,6 +58,12 @@ struct block_t {
     char last_fmt_text[300] = {'\0'};    // contains a backup of text, gets updated on get*() functions
     bool separator = 1;
 
+    uint8_t strgraph_value;             // percentage used to make str graph
+
+    block_type_t type = TEXT;           // type, in enum 
+
+    uint8_t graph_len = 20;
+
     char graph_chr1 = '|';
     char graph_chr2 = '|';
 
@@ -74,7 +86,23 @@ struct block_t {
         return (strcmp(last_fmt_text, fmt_text) == 0) ? false : true;
     }
 
+
     bool get(bool sep=1) {
+        switch (type) {
+            case TEXT:
+                return get_text(sep);
+            case GRAPH:
+                return get_graph();
+            case STR_GRAPH:
+                return get_strgraph();
+            default:
+                return 0;       // TODO this is nonsense, should return something sensible
+
+        }
+    }
+
+
+    bool get_text(bool sep=1) {
         if (!sep)
             separator = true;
             
@@ -88,30 +116,30 @@ struct block_t {
         return false;
     }
 
-    bool get_graph(uint8_t length=20) {
+    bool get_graph() {
         if (is_error)
-            return get();
+            return get_text();
 
         uint8_t percent = atoi(text);
         if (percent > 100)
             percent = 100;
-        int8_t level = (percent / 100.0) * length;
+        int8_t level = (percent / 100.0) * graph_len;
         uint8_t sep_block_width = separator ? 20 : 0;
 
-        char l_text[length+1] = {'\0'};
-        char r_text[length+1] = {'\0'};
+        char l_text[graph_len+1] = {'\0'};
+        char r_text[graph_len+1] = {'\0'};
         char l_fmt[150]       = {'\0'};
         char r_fmt[150]       = {'\0'};
 
         for (uint8_t i=0 ; i<level ; i++) {
             l_text[i] = graph_chr1;
         }
-        for (uint8_t i=0 ; i<length-level ; i++) {
+        for (uint8_t i=0 ; i<graph_len-level ; i++) {
             r_text[i] = graph_chr2;
         }
 
-        // handle case where level is maximum length, second line would be empty and therefore skipped and screw up spacing between blocks (see i3 input protocol)
-        if (level == length) {
+        // handle case where level is maximum graph_len, second line would be empty and therefore skipped and screw up spacing between blocks (see i3 input protocol)
+        if (level == graph_len) {
             sprintf(l_fmt, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": %d}", l_text, color1, sep_block_width);
             sprintf(fmt_text, "%s", l_fmt);
         }
@@ -127,15 +155,15 @@ struct block_t {
         return false;
     }
 
-    bool get_strgraph(uint8_t percent) {
+    bool get_strgraph() {
         if (is_error)
-            return get();
+            return get_text();
 
-        if (percent > 100)
-            percent = 100;
+        if (strgraph_value > 100)
+            strgraph_value = 100;
 
         uint8_t graph_len = strlen(text);
-        int8_t level = (percent / 100.0) * graph_len;
+        int8_t level = (strgraph_value / 100.0) * graph_len;
         uint8_t sep_block_width = separator ? 20 : 0;
         uint8_t index = 0;
 
@@ -153,7 +181,7 @@ struct block_t {
             index++;
         }
 
-        // handle case where level is maximum length, second line would be skipped and screw up spacing between blocks (see i3 input protocol)
+        // handle case where level is maximum graph_len, second line would be skipped and screw up spacing between blocks (see i3 input protocol)
         if (level == graph_len) {
             sprintf(l_fmt, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": %d}", l_text, color1, sep_block_width);
             sprintf(fmt_text, "%s", l_fmt);
@@ -335,7 +363,7 @@ void parse_args(int* argc, char** argv) {
 }
 
 
-void get_essid(block_t& block, int8_t* link_quality) {
+void get_essid(block_t& block) {
     if (!t_wireless.has_elapsed(WIRELESS_CHECK_SECONDS))
         return;
 
@@ -352,7 +380,8 @@ void get_essid(block_t& block, int8_t* link_quality) {
         block.set_error("SIGNAL ERROR");
         return;
     }
-    *link_quality = signal;
+
+    block.strgraph_value = signal;
         
     int sockfd;
     char * id;
@@ -545,6 +574,15 @@ int main(int argc, char **argv) {
     strcpy(essid.color2,    wireless_color2);
     strcpy(datetime.color1, datetime_color1);
 
+    // set display type (TEXT, GRAPH, TXT_GRAPH)
+    datetime.type = TEXT;
+    volume.type   = GRAPH;
+    battery.type  = GRAPH;
+    essid.type    = STR_GRAPH;
+
+    for (block_t& block: site_blocks)
+        block.type = TEXT;
+
     while (1) {
         int8_t link_quality;
 
@@ -553,24 +591,24 @@ int main(int argc, char **argv) {
         get_alsa_volume(volume);
         get_batt_level(battery);
         get_datetime(datetime);
-        get_essid(essid, &link_quality);
+        get_essid(essid);
 
         strcpy(essid.color1, (link_quality >= WIRELESS_STRENGTH_TRESHOLD) ? wireless_color1_good : wireless_color1_bad);
         strcpy(battery.color1, (atoi(battery.text) >= BATTERY_TRESHOLD) ? battery_color1_normal : battery_color1_critical);
 
-
         // only update when changes are made
         bool changed = false;
 
-        for (block_t& block: site_blocks)
+        // TODO stop checking when changed == true
+        for (block_t& block: site_blocks) {
             if (block.get())
                 changed = true;
+        }
 
-        if (battery.get_graph()) changed = true;
-        if (volume.get_graph()) changed = true;
-        if (essid.get_strgraph(link_quality)) changed = true;
+        if (battery.get())  changed = true;
+        if (volume.get())   changed = true;
+        if (essid.get())    changed = true;
         if (datetime.get()) changed = true;
-
 
         if (changed) {
             printf("[\n");
