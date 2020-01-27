@@ -1,5 +1,7 @@
 #include <stdint.h>
 
+#define SEPARATOR_STR               ":"                  // chars to display as a separator (if enabled)
+
 #define WIRELESS_PATH               "/proc/net/wireless" // don't change
 #define WIRELESS_STRENGTH_TRESHOLD  65                   // change color below percentage
 #define WIRELESS_CHECK_SECONDS      5                    // seconds inbetween wireless checks 

@@ -79,6 +79,7 @@ struct block_t {
     // indicate whether there was an error or not, graphs shouldn't be displayed in case of an error
     void set_error(const char* error) {
         is_error = true;
+        type = TEXT;            // set type to text in case of error, just display the message alright!
         strcpy(text, error);
     }
 
@@ -560,21 +561,31 @@ int main(int argc, char **argv) {
     parse_args(&argc, argv);
     print_header();
         
+    // create block objects
     uint8_t sites_len = sizeof(sites)/sizeof(sites[0]);
     block_t site_blocks[sites_len];
+
 
     block_t volume;
     block_t battery;
     block_t datetime;
     block_t essid;
+    block_t separator;;
 
+    // configure colors
     strcpy(volume.color1,   volume_color1);
     strcpy(volume.color2,   volume_color2);
     strcpy(battery.color2,  battery_color2);
     strcpy(essid.color2,    wireless_color2);
     strcpy(datetime.color1, datetime_color1);
 
-    // set display type (TEXT, GRAPH, TXT_GRAPH)
+    // configure the separator that can be used inbetween blocks
+    strcpy(separator.color1, colors.gray);
+    strcpy(separator.text, SEPARATOR_STR);
+    separator.separator = false;
+    separator.get();
+
+    // set method of displaying the status info
     datetime.type = TEXT;
     volume.type   = GRAPH;
     battery.type  = GRAPH;
@@ -584,22 +595,20 @@ int main(int argc, char **argv) {
         block.type = TEXT;
 
     while (1) {
-        int8_t link_quality;
-
-        get_sites_up(sites, site_blocks, sites_len, colors.green, colors.orange, colors.red);
-
+        // get status info
+        get_sites_up(sites, site_blocks, sites_len, http_color_up, http_color_timedout, http_color_down);
         get_alsa_volume(volume);
         get_batt_level(battery);
         get_datetime(datetime);
         get_essid(essid);
 
-        strcpy(essid.color1, (link_quality >= WIRELESS_STRENGTH_TRESHOLD) ? wireless_color1_good : wireless_color1_bad);
+        // set some colors that depend on the status
+        strcpy(essid.color1, (essid.strgraph_value >= WIRELESS_STRENGTH_TRESHOLD) ? wireless_color1_good : wireless_color1_bad);
         strcpy(battery.color1, (atoi(battery.text) >= BATTERY_TRESHOLD) ? battery_color1_normal : battery_color1_critical);
 
-        // only update when changes are made
         bool changed = false;
 
-        // TODO stop checking when changed == true
+        // get i3 input protocol style json, check if there are changes, only update when changes are made
         for (block_t& block: site_blocks) {
             if (block.get())
                 changed = true;
@@ -610,11 +619,15 @@ int main(int argc, char **argv) {
         if (essid.get())    changed = true;
         if (datetime.get()) changed = true;
 
+        // print the json to stdout
         if (changed) {
             printf("[\n");
 
-            for (block_t& block: site_blocks)
-                printf("%s,\n", block.fmt_text);
+            for (uint8_t i=0 ; i<sites_len ; i++) {
+                printf("%s,\n", site_blocks[i].fmt_text);
+                if (i != sites_len-1)
+                    printf("%s,\n", separator.fmt_text);
+            }
 
             printf("%s,\n", battery.fmt_text);
             printf("%s,\n", volume.fmt_text);
