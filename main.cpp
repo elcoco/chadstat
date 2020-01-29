@@ -198,6 +198,8 @@ class block_t {
 
 class block_wireless: public block_t{
     private:
+    t_delta_t t_delta;
+
     bool check_wireless(const char* ifname, char* protocol) {
         int sock = -1;
         struct iwreq pwrq;
@@ -291,7 +293,6 @@ class block_wireless: public block_t{
     }
 
     public:
-    t_delta_t t_delta;
     block_wireless() { t_delta_t t_delta; }
         
     void get_data() {
@@ -349,8 +350,10 @@ class block_wireless: public block_t{
 
 
 class block_datetime: public block_t{
-    public:
+    private:
     t_delta_t t_delta;
+
+    public:
     block_datetime() { t_delta_t t_delta; }
 
     void get_data() {
@@ -365,8 +368,10 @@ class block_datetime: public block_t{
 
 
 class block_volume: public block_t{
-    public:
+    private:
     t_delta_t t_delta;
+
+    public:
     block_volume() { t_delta_t t_delta; }
 
     void get_data() {
@@ -406,8 +411,10 @@ class block_volume: public block_t{
 
 
 class block_battery: public block_t{
-    public:
+    private:
     t_delta_t t_delta;
+
+    public:
     block_battery() { t_delta_t t_delta; }
 
     void get_data() {
@@ -468,9 +475,8 @@ class block_battery: public block_t{
 
 
 class block_fs: public block_t{
-    public:
+    private:
     t_delta_t t_delta;
-    block_fs() { t_delta_t t_delta; }
 
     uint16_t get_fs_usage(const char* path) {
         struct statvfs stat;
@@ -484,19 +490,18 @@ class block_fs: public block_t{
         return (stat.f_bsize * stat.f_blocks)/1024/1024/1024;
     }
 
+    public:
+    block_fs() { t_delta_t t_delta; }
+
     void get_data() {
     }
 };
 
 
 class block_site: public block_t{
-    public:
+    private:
     t_delta_t t_delta;
     site_t site;
-
-    block_site() { t_delta_t t_delta; }
-
-    void set_site( site_t s) {site = s;}
 
     int8_t do_request(const char* url, long& response_code) {
         CURL *curl = curl_easy_init();
@@ -514,6 +519,11 @@ class block_site: public block_t{
         }
         return -1;
     }
+
+    public:
+    block_site() { t_delta_t t_delta; }
+
+    void set_site( site_t s) {site = s;}
 
     void get_data() {
         // return if a check is not due
