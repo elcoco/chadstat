@@ -18,7 +18,6 @@
 #define HTTP_CHECK_SECONDS          30                   // seconds inbetween site up checks 
 #define HTTP_MAX_TIMEOUT            1L                   // max seconds before timeout
 
-
 // colors
 struct colors_t {
     const char orange[8]    = "#ad6500";
@@ -45,13 +44,13 @@ const char* http_color_up            = colors.green;
 const char* http_color_timedout      = colors.orange;
 const char* http_color_down          = colors.red;
 
-
 struct site_t {
     const char* url;
     const char* id;
     long res_code;       // expected response code
 };
 
+// check these sites and their respective status codes.
 site_t sites[] = {
 //   URL                                ID   EXPECTED STATUS CODE
     {"https://monutor.com",             "Mo",   200},
