@@ -1,11 +1,24 @@
-statusline: main.o
-	g++ main.o -lpulse-simple -lasound -lcurl -o statusline
+CXX = g++
+CXXFLAGS = -lasound -lcurl -Wall
 
-main.o: main.cpp
-	g++ -c main.cpp
+# target: dependencies
+# 	  action
+
+
+statusline: main.o blocks.o utils.o
+	$(CXX) main.o blocks.o utils.o $(CXXFLAGS) -o statusline
+
+main.o: main.cpp 
+	$(CXX) -c main.cpp
+
+blocks.o: blocks.cpp blocks.h
+	$(CXX) -c blocks.cpp
+
+utils.o: utils.cpp utils.h
+	$(CXX) -c utils.cpp
 
 clean:
-	rm *.o statusline
+	rm *.o
 
 install:
 	cp -f statusline ~/bin/apps
