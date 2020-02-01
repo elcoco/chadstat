@@ -110,6 +110,14 @@ int main(int argc, char **argv) {
     battery.type    = GRAPH;
     battery.set_color2(battery_color2);
 
+    block_t* block_arr[] = {
+        &datetime,
+        &wireless,
+        &volume,
+        &battery
+    };
+
+
     while (1) {
         volume.get_data();
 
@@ -143,6 +151,7 @@ int main(int argc, char **argv) {
                 if (i != sites_len-1)
                     printf("%s,\n", separator.fmt_text);
             }
+
 
             printf("%s,\n", battery.fmt_text);
             printf("%s,\n", volume.fmt_text);

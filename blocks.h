@@ -37,7 +37,7 @@ class block_t {
     uint8_t graph_len = 20;
     char graph_chr1 = '|';
     char graph_chr2 = '|';
-    bool is_error = false;
+    bool is_error = false;               // boolean that indicates if there was an error
 
     bool has_changed();
 

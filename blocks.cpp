@@ -124,6 +124,8 @@ bool block_t::get(bool sep) {
 }
 
 
+block_wireless::block_wireless() { t_delta_t t_delta; }
+
 bool block_wireless::check_wireless(const char* ifname, char* protocol) {
     int sock = -1;
     struct iwreq pwrq;
@@ -215,7 +217,6 @@ int8_t block_wireless::get_signal_strength(char* interface) {
     return atoi(tok);
 }
 
-block_wireless::block_wireless() { t_delta_t t_delta; }
         
 void block_wireless::get_data() {
     if (!t_delta.has_elapsed(WIRELESS_CHECK_SECONDS))
@@ -377,6 +378,8 @@ void block_battery::get_data() {
 }
 
 
+block_fs::block_fs() { t_delta_t t_delta; }
+
 uint16_t block_fs::get_fs_usage(const char* path) {
     struct statvfs stat;
     statvfs(path, &stat);
@@ -389,11 +392,12 @@ uint16_t block_fs::get_fs_total(const char* path) {
     return (stat.f_bsize * stat.f_blocks)/1024/1024/1024;
 }
 
-block_fs::block_fs() { t_delta_t t_delta; }
-
 void block_fs::get_data() { }
 
 
+
+block_site::block_site::block_site() { t_delta_t t_delta; }
+void block_site::set_site( site_t s) {site = s;}
 
 int8_t block_site::do_request(const char* url, long& response_code) {
     CURL *curl = curl_easy_init();
@@ -411,10 +415,6 @@ int8_t block_site::do_request(const char* url, long& response_code) {
     }
     return -1;
 }
-
-block_site::block_site::block_site() { t_delta_t t_delta; }
-
-void block_site::set_site( site_t s) {site = s;}
 
 void block_site::get_data() {
     // return if a check is not due
