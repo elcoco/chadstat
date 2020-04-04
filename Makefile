@@ -22,3 +22,4 @@ clean:
 
 install:
 	cp -f statusline ~/bin/apps
+	chmod +x ~/bin/apps/statusline
