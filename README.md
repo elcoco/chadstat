@@ -1,5 +1,9 @@
 # i3status
 
+## Deps
+- libasound2-dev
+- libcurl4-openssl-dev
+
 ## Install
 ```
 make
