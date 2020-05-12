@@ -13,17 +13,16 @@ bool is_elapsed(block_t* block) {
     return false;
 }
 
-void set_changed(block_t* block) {
+bool is_changed(block_t* block) {
     // set flag if value has changed
     if (strcmp(block->text, block->text_prev) == 0) {
-        block->is_changed = false;
+        return false;
     }
     else {
-        block->is_changed = true;
         strcpy(block->text_prev, block->text);
+        return true;
     }
 }
-
 
 
 void get_graph(block_t* block, uint8_t graph_len, uint8_t percent, char* color) {
@@ -85,10 +84,10 @@ void get_strgraph(block_t* block, char* str, uint8_t percent, char* color) {
         sprintf(block->text, "%s%s%s%s", color, l_text, CS_NORMAL, r_text);
 }
 
-void get_datetime(block_t* block) {
+bool get_datetime(block_t* block) {
     if (! is_elapsed(block)) {
         block->is_changed = false;
-        return;
+        return false;
     }
 
     time_t t = time(NULL);            // 32bit integer representing time
@@ -97,5 +96,101 @@ void get_datetime(block_t* block) {
 
     strftime(buffer, 100, DATETIME_FMT, &tm);
     sprintf(block->text, "%s%s", COL_DATETIME, buffer);
-    set_changed(block);
+    return is_changed(block);
+}
+
+bool get_volume(block_t* block) {
+    if (! is_elapsed(block)) {
+        block->is_changed = false;
+        return false;
+    }
+
+    long min, max;
+    long level;
+    uint16_t volume;
+
+    snd_mixer_t *handle;
+    snd_mixer_selem_id_t *sid;
+
+    const char *card = "default";
+    const char *selem_name = "Master";
+
+    snd_mixer_open(&handle, 0);
+    snd_mixer_attach(handle, card);
+    snd_mixer_selem_register(handle, NULL, NULL);
+    snd_mixer_load(handle);
+
+    snd_mixer_selem_id_alloca(&sid);
+    snd_mixer_selem_id_set_index(sid, 0);
+    snd_mixer_selem_id_set_name(sid, selem_name);
+    snd_mixer_elem_t* elem = snd_mixer_find_selem(handle, sid);
+    snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
+    snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &level);
+
+    volume = ((float)level/(float)max)*100.00;
+    get_graph(block, 21, volume, COL_VOLUME);
+    snd_mixer_close(handle);
+    return is_changed(block);
+}
+
+bool get_battery(block_t* block) {
+    if (! is_elapsed(block)) {
+        block->is_changed = false;
+        return false;
+    }
+
+    char path[100] = {'\0'};
+    char capacity_path[100] = {'\0'};
+
+    strcpy(path, BATTERY_PATH);
+
+    struct dirent *de;  // Pointer for directory entry 
+    DIR *dr = opendir(path);
+
+    if (dr == NULL) {
+        //set_error("DIR ERROR");
+        closedir(dr);
+        return false;
+    }
+
+    // find dir containing BAT*
+    while ((de = readdir(dr)) != NULL) {
+        if (strstr(de->d_name, "BAT") != NULL) {
+            strcat(path, "/");
+            strcat(path, de->d_name);
+            break;
+        }
+    }
+
+    closedir(dr);
+
+    strcat(capacity_path, path);
+    strcat(capacity_path, "/capacity");
+
+    // exit if file doesn't exist
+    if (access(capacity_path, F_OK ) == -1) {
+        //set_error("CAPACITY FILE ERROR");
+        return false;
+    }
+
+    FILE *fp;
+
+    char buffer[100] = {'\0'};
+
+    fp = fopen(capacity_path, "r");
+    if (fp == NULL) {
+        //set_error("CAPACITY READ ERROR");
+    }
+    else {
+        fgets(buffer, 4, (FILE*)fp);
+    }
+    // remove trailing newlines
+    strtok(buffer, "\n");
+
+    char* color = (atoi(buffer) > BATTERY_TRESHOLD) ? COL_BATTERY_NORMAL : COL_BATTERY_CRITICAL;
+
+    get_graph(block, 21, atoi(buffer), color);
+
+    fclose(fp);
+    return is_changed(block);
 }

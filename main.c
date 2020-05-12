@@ -72,7 +72,6 @@ void parse_args(int* argc, char** argv) {
 }
 
 void init_x11() {
-
     dpy = XOpenDisplay(NULL);
 
     if (dpy == NULL) 
@@ -93,20 +92,37 @@ int main(int argc, char **argv) {
     parse_args(&argc, argv);
 
     block_t datetime;
+    block_t volume;
+    block_t battery;
+
     datetime.timeout = 10;
+    volume.timeout = 1;
+    battery.timeout = 1;
 
     // return changed
     //
-    while (1) {
-        get_datetime(&datetime);
-        //printf(">>>bool=%d\n", datetime.is_changed);
 
-        if (datetime.is_changed) {
-            printf(">>> changed %s\n", datetime.text);
+    while (1) {
+        bool is_changed = false;
+
+        if (get_datetime(&datetime)) is_changed = true;
+        if (get_volume(&volume))     is_changed = true;
+        if (get_battery(&battery))     is_changed = true;
+
+        if (is_changed) {
+            char status[500] = {'\0'};
+
+            strcat(status, battery.text);
+            strcat(status, "  ");
+            strcat(status, volume.text);
+            strcat(status, "  ");
+            strcat(status, datetime.text);
 
             init_x11();
-            XStoreName(dpy, root, datetime.text);
+            XStoreName(dpy, root, status);
             close_x11();
+
+            printf(">>> changed %s\n", status);
         }
 
 

@@ -36,26 +36,16 @@
 #define CS_WARNING  ""
 #define CS_URGENT   ""
 
-#define COL_DATETIME CS_WARNING
+#define COL_DATETIME         CS_NORMAL
+#define COL_VOLUME           CS_SELECTED
+#define COL_BATTERY_NORMAL   CS_WARNING
+#define COL_BATTERY_CRITICAL CS_SELECTED
 
-typedef enum {
-    TXT,
-    GRAPH,
-    TXTGRAPH
-} type_t;
-
-// this defines which color scheme should be used
-typedef enum {
-    NORMAL,
-    SELECTED,
-    WARNING,
-    URGENT
-} level_t;
-
+#define BATTERY_TRESHOLD            10                   // change color below percentage
+#define BATTERY_CHECK_SECONDS       30                   // seconds inbetween battery checks 
+#define BATTERY_PATH                   "/sys/class/power_supply"
 
 typedef struct {
-    type_t      type;
-    level_t     level;
     uint32_t    t_last;
     char        text[100];
     char        text_prev[100];
@@ -63,13 +53,14 @@ typedef struct {
     uint8_t     timeout;
 } block_t;
 
-void set_tlast(block_t* block);
+bool is_changed(block_t* block);
 bool is_elapsed(block_t* block);
 
 void get_graph(block_t* block, uint8_t graph_len, uint8_t percent, char* color);
 void get_strgraph(block_t* block, char* str, uint8_t percent, char* color);
 
-void get_datetime(block_t* datetime);
+bool get_datetime(block_t* block);
+bool get_volume(block_t* block);
 /*
 struct block_t get_wireless(char* color1, char* color2);
 struct block_t get_volume();
