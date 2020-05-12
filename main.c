@@ -10,9 +10,6 @@
 #include "blocks.h"
 
 
-#define datetime_color  ""
-#define wireless_color1 ""
-#define wireless_color2 ""
 
 void die(char* msg);
 void parse_args(int*, char** argv);
@@ -96,11 +93,13 @@ int main(int argc, char **argv) {
     parse_args(&argc, argv);
 
     block_t datetime;
+    datetime.timeout = 10;
 
     // return changed
     //
     while (1) {
-        get_datetime(&datetime, datetime_color);
+        get_datetime(&datetime);
+        //printf(">>>bool=%d\n", datetime.is_changed);
 
         if (datetime.is_changed) {
             printf(">>> changed %s\n", datetime.text);

@@ -31,6 +31,13 @@
 
 #define DATETIME_FMT                "%A %d:%m:%Y %H:%M"
 
+#define CS_NORMAL   ""
+#define CS_SELECTED ""
+#define CS_WARNING  ""
+#define CS_URGENT   ""
+
+#define COL_DATETIME CS_WARNING
+
 typedef enum {
     TXT,
     GRAPH,
@@ -39,24 +46,30 @@ typedef enum {
 
 // this defines which color scheme should be used
 typedef enum {
-    OK,
+    NORMAL,
+    SELECTED,
     WARNING,
-    ERROR
+    URGENT
 } level_t;
 
 
 typedef struct {
     type_t      type;
     level_t     level;
-    uint32_t    t_prev;
+    uint32_t    t_last;
     char        text[100];
+    char        text_prev[100];
     bool        is_changed;
+    uint8_t     timeout;
 } block_t;
 
-int8_t get_graph(block_t block, uint8_t len, uint8_t percent);
-int8_t get_strgraph(block_t block, char* str, uint8_t percent);
+void set_tlast(block_t* block);
+bool is_elapsed(block_t* block);
 
-void get_datetime(block_t* datetime, char* color1);
+void get_graph(block_t* block, uint8_t graph_len, uint8_t percent, char* color);
+void get_strgraph(block_t* block, char* str, uint8_t percent, char* color);
+
+void get_datetime(block_t* datetime);
 /*
 struct block_t get_wireless(char* color1, char* color2);
 struct block_t get_volume();
