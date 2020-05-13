@@ -24,7 +24,7 @@ bool is_changed(block_t* block) {
 }
 
 void set_error(block_t* block, char* msg) {
-    sprintf(block->text, "%s%s", CS_URGENT, msg);
+    sprintf(block->text, "%s%s", CS_ERROR, msg);
 }
 
 void get_graph(block_t* block, uint8_t graph_len, uint8_t percent, char* color) {
@@ -35,7 +35,7 @@ void get_graph(block_t* block, uint8_t graph_len, uint8_t percent, char* color) 
     char graph_chr1 = '|';
     char graph_chr2 = '|';
 
-    graph_len = 20;
+    graph_len = graph_len++;
 
     char l_text[21] = {'\0'};
     char r_text[21] = {'\0'};
@@ -97,7 +97,7 @@ bool get_datetime(block_t* block) {
     char buffer[80];
 
     strftime(buffer, 100, DATETIME_FMT, &tm);
-    sprintf(block->text, "%s%s", COL_DATETIME, buffer);
+    sprintf(block->text, "%s%s", CS_NORMAL, buffer);
     return is_changed(block);
 }
 
@@ -130,7 +130,7 @@ bool get_volume(block_t* block) {
     snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &level);
 
     volume = ((float)level/(float)max)*100.00;
-    get_graph(block, 21, volume, COL_VOLUME);
+    get_graph(block, VOLUME_BAR_LEN, volume, CS_SELECTED);
     snd_mixer_close(handle);
     return is_changed(block);
 }
@@ -189,9 +189,9 @@ bool get_battery(block_t* block) {
     // remove trailing newlines
     strtok(buffer, "\n");
 
-    char* color = (atoi(buffer) > BATTERY_TRESHOLD) ? COL_BATTERY_NORMAL : COL_BATTERY_CRITICAL;
+    char* color = (atoi(buffer) > BATTERY_TRESHOLD) ? CS_OK : CS_SELECTED;
 
-    get_graph(block, 21, atoi(buffer), color);
+    get_graph(block, BATTERY_BAR_LEN, atoi(buffer), color);
 
     fclose(fp);
     return is_changed(block);
@@ -219,17 +219,17 @@ bool get_sites(block_t* block) {
         char color[5];
         
         if (res == CURLE_OK && site.res_code == response_code)
-            strcpy(color, COL_HTTP_UP);
+            strcpy(color, CS_OK);
         else if (res == CURLE_OPERATION_TIMEDOUT)
-            strcpy(color, COL_HTTP_TIMEDOUT);
+            strcpy(color, CS_SELECTED);
         else
-            strcpy(color, COL_HTTP_DOWN);
+            strcpy(color, CS_ERROR);
 
         strcat(buffer, color);
         strcat(buffer, site.id);
 
         if (i < sites_len-1) {
-            strcat(buffer, COL_HTTP_SEP);
+            strcat(buffer, CS_NORMAL);
             strcat(buffer, ":");
         }
     }
@@ -286,9 +286,9 @@ bool get_wireless(block_t* block) {
     else {
         if (strlen((char *)wreq.u.essid.pointer) > 0) {
             if (signal > WIRELESS_STRENGTH_TRESHOLD)
-                get_strgraph(block, (char *)wreq.u.essid.pointer, signal, COL_WIRELESS_NORMAL);
+                get_strgraph(block, (char *)wreq.u.essid.pointer, signal, CS_OK);
             else
-                get_strgraph(block, (char *)wreq.u.essid.pointer, signal, COL_WIRELESS_LOW);
+                get_strgraph(block, (char *)wreq.u.essid.pointer, signal, CS_SELECTED);
         }
         else {
             set_error(block, "DISCONNECTED");

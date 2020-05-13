@@ -1,5 +1,8 @@
 #pragma once
 
+#include <stdbool.h> // bool
+#include <stdint.h>
+
 #include "config.h"
 #include "blocks.h"
 

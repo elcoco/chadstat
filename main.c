@@ -10,7 +10,6 @@
 #include "blocks.h"
 #include "config.h"
 
-#define MAXSTRING 512
 
 static void xsetroot(const char *name);
 void die(char* msg);
@@ -19,7 +18,6 @@ void usage();
 int main();
 
 uint8_t timeout = DEAULT_TIMEOUT;
-
 
 void die(char* msg) {
     printf("%s", msg);
@@ -112,11 +110,11 @@ int main(int argc, char **argv) {
         if (is_changed) {
             char status[MAXSTRING+1] = {'\0'};
 
-            int16_t r = snprintf(status, MAXSTRING, "%s  %s  %s  %s  %s", sites.text,
-                                                                      battery.text,
-                                                                      volume.text,
-                                                                      wireless.text,
-                                                                      datetime.text);
+            int16_t r = snprintf(status, MAXSTRING, "%s  %s  %s  %s  %s      ", sites.text,
+                                                                          battery.text,
+                                                                          volume.text,
+                                                                          wireless.text,
+                                                                          datetime.text);
             if (r == -1)
                 xsetroot("SNPRINTF ENCODING ERROR");
             else if ( r >= MAXSTRING)

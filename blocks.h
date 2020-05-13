@@ -29,13 +29,6 @@
 #include "config.h"
 
 
-typedef struct {
-    uint32_t    t_last;
-    char        text[50];
-    char        text_prev[50];
-    bool        is_changed;
-    uint8_t     timeout;
-} block_t;
 
 bool is_changed(block_t* block);
 bool is_elapsed(block_t* block);
