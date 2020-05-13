@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdbool.h> // bool
+#include <stdbool.h>        // bool
 
 #include <stdint.h>         // uint types
 #include <time.h>           // datetime info
@@ -23,7 +23,6 @@
 // get network interfaces
 #include <ifaddrs.h>
 #include <netdb.h>
-
 
 #include "utils.h"
 #include "config.h"

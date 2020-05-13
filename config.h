@@ -62,5 +62,5 @@ static site_t sites_arr[] = {
     {"https://api.monutor.com",         "API",  404},
     {"https://dashboard.monutor.com",   "DA",   200},
     {"https://rocketchat.monutor.com",  "RC",   200},
-    {"https://nc.freeradical.nl",       "NC",   200}
+    {"https://nc.chmod777.org",         "NC",   200}
 };
