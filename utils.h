@@ -1,7 +1,5 @@
 #pragma once
 
-#include <curl/curl.h>      // sites up?
-
 #include "config.h"
 #include "blocks.h"
 
