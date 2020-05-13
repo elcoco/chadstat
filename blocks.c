@@ -1,6 +1,13 @@
 #include "blocks.h"
 
 
+bool disko(uint8_t bla) {
+    printf("bla\n");
+}
+bool disko2(uint8_t bla) {
+    printf("bever\n");
+}
+
 bool is_elapsed(block_t* block) {
     // check if time has elapsed, reset time of so
     uint32_t t_cur = time(NULL);
@@ -87,10 +94,13 @@ void get_strgraph(block_t* block, char* str, uint8_t percent, char* color) {
 }
 
 bool get_datetime(block_t* block) {
-    if (! is_elapsed(block)) {
-        block->is_changed = false;
+    if (!block->enabled) {
+        strcpy(block->text, "");
         return false;
     }
+
+    if (! is_elapsed(block))
+        return false;
 
     time_t t = time(NULL);            // 32bit integer representing time
     struct tm tm = *localtime(&t);    // get struct with time data
@@ -102,10 +112,13 @@ bool get_datetime(block_t* block) {
 }
 
 bool get_volume(block_t* block) {
-    if (! is_elapsed(block)) {
-        block->is_changed = false;
+    if (!block->enabled) {
+        strcpy(block->text, "");
         return false;
     }
+
+    if (! is_elapsed(block))
+        return false;
 
     long min, max;
     long level;
@@ -130,16 +143,19 @@ bool get_volume(block_t* block) {
     snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &level);
 
     volume = ((float)level/(float)max)*100.00;
-    get_graph(block, VOLUME_BAR_LEN, volume, CS_SELECTED);
+    get_graph(block, block->graphlen, volume, CS_SELECTED);
     snd_mixer_close(handle);
     return is_changed(block);
 }
 
 bool get_battery(block_t* block) {
-    if (! is_elapsed(block)) {
-        block->is_changed = false;
+    if (!block->enabled) {
+        strcpy(block->text, "");
         return false;
     }
+
+    if (! is_elapsed(block))
+        return false;
 
     char path[100] = {'\0'};
     char capacity_path[100] = {'\0'};
@@ -189,19 +205,22 @@ bool get_battery(block_t* block) {
     // remove trailing newlines
     strtok(buffer, "\n");
 
-    char* color = (atoi(buffer) > BATTERY_TRESHOLD) ? CS_OK : CS_SELECTED;
+    char* color = (atoi(buffer) > block->treshold) ? CS_OK : CS_SELECTED;
 
-    get_graph(block, BATTERY_BAR_LEN, atoi(buffer), color);
+    get_graph(block, block->graphlen, atoi(buffer), color);
 
     fclose(fp);
     return is_changed(block);
 }
 
 bool get_sites(block_t* block) {
-    if (! is_elapsed(block)) {
-        block->is_changed = false;
+    if (!block->enabled) {
+        strcpy(block->text, "");
         return false;
     }
+
+    if (! is_elapsed(block))
+        return false;
 
     // get lenght of sites array
     uint8_t sites_len = sizeof(sites_arr)/sizeof(sites_arr[0]);
@@ -239,10 +258,13 @@ bool get_sites(block_t* block) {
 }
         
 bool get_wireless(block_t* block) {
-    if (! is_elapsed(block)) {
-        block->is_changed = false;
+    if (!block->enabled) {
+        strcpy(block->text, "");
         return false;
     }
+
+    if (! is_elapsed(block))
+        return false;
 
     // find wireless if address
     char ifaddr[20] = {'\0'};
@@ -285,7 +307,7 @@ bool get_wireless(block_t* block) {
     }
     else {
         if (strlen((char *)wreq.u.essid.pointer) > 0) {
-            if (signal > WIRELESS_STRENGTH_TRESHOLD)
+            if (signal > block->treshold)
                 get_strgraph(block, (char *)wreq.u.essid.pointer, signal, CS_OK);
             else
                 get_strgraph(block, (char *)wreq.u.essid.pointer, signal, CS_SELECTED);
@@ -300,10 +322,13 @@ bool get_wireless(block_t* block) {
 }
 
 bool get_mpd(block_t *block) {
-    if (! is_elapsed(block)) {
-        block->is_changed = false;
+    if (!block->enabled) {
+        strcpy(block->text, "");
         return false;
     }
+
+    if (! is_elapsed(block))
+        return false;
 
 	struct mpd_connection *conn;
 

@@ -20,14 +20,27 @@
 #include "utils.h"
 #include "config.h"
 
+struct block_t;
+//typedef struct block_t;
+
+typedef   bool (*Get)(struct block_t *block );
 
 typedef struct {
-    uint8_t  timeout;
-    bool     is_changed;
+    char     name[20];
+    bool     enabled;
+    int8_t  timeout;
+    //bool    (*get)(uint8_t bla );
+    //bool (*get)(struct block_t *block );
+    Get     get;
+    int8_t  treshold;
+    int8_t  graphlen;
+    bool     separator;
     uint32_t t_last;
     char     text[50];
     char     text_prev[50];
 } block_t;
+
+
 
 bool is_changed(block_t* block);
 bool is_elapsed(block_t* block);
@@ -43,3 +56,17 @@ bool get_battery(block_t* block);
 bool get_sites(block_t* block);
 bool get_wireless(block_t* block);
 bool get_mpd(block_t *block);
+
+bool disko(uint8_t bla);
+bool disko2(uint8_t bla);
+
+// add function pointer to the list
+static block_t block_arr[] = {
+//    NAME        ENABLED TIMEOUT  FUNC          TRESHOLD  GRAPHLEN SEPARATOR
+    { "mpd",      false,       5,  get_mpd,      -1,       -1,    true},
+    { "http",     true,       30,  get_sites,    -1,       -1,    true},
+    { "volume",   true,        3,  get_volume,   -1,       10,    true},
+    { "battery",  true,       30,  get_battery,  10,       10,    true},
+    { "wireless", true,        3,  get_wireless, 50,       -1,    true},
+    { "datetime", false,       5,  get_datetime, -1,       -1,    true}
+};

@@ -73,50 +73,29 @@ static void xsetroot(const char *name){
 int main(int argc, char **argv) {
     parse_args(&argc, argv);
 
-    block_t datetime;
-    block_t volume;
-    block_t battery;
-    block_t sites;
-    block_t wireless;
-    block_t mpd;
-
-    datetime.timeout = DATETIME_TIMEOUT;
-    volume.timeout   = VOLUME_TIMEOUT;
-    battery.timeout  = BATTERY_TIMEOUT;
-    sites.timeout    = HTTP_TIMEOUT;
-    wireless.timeout = WIRELESS_TIMEOUT;
-    mpd.timeout      = MPD_TIMEOUT;
-
     // reset
     xsetroot("");
 
 
     while (1) {
         bool is_changed = false;
+        uint8_t length = sizeof(block_arr)/sizeof(block_arr[0]);
 
-        if (get_datetime(&datetime))    is_changed = true;
-        if (get_volume(&volume))        is_changed = true;
-        if (get_battery(&battery))      is_changed = true;
-        if (get_sites(&sites))          is_changed = true;
-        if (get_wireless(&wireless))    is_changed = true;
-        if (get_mpd(&mpd))              is_changed = true;
+        for (uint8_t i=0 ; i<length ; i++) {
+            if (block_arr[i].get(&block_arr[i]))
+                is_changed = true;
+        }
 
         if (is_changed) {
             char status[MAXSTRING+1] = {'\0'};
 
-            int16_t r = snprintf(status, MAXSTRING, "%s %s %s %s %s  %s           ", mpd.text,
-                                                                                     sites.text,
-                                                                                     battery.text,
-                                                                                     volume.text,
-                                                                                     wireless.text,
-                                                                                     datetime.text);
-            if (r == -1)
-                xsetroot("SNPRINTF ENCODING ERROR");
-            else if ( r >= MAXSTRING)
-                xsetroot("STATUS EXCEEDS MAXLENGTH");
-            else
-                xsetroot(status);
+            for (uint8_t i=0 ; i<length ; i++) {
+                strcat(status, block_arr[i].text);
+                strcat(status, " ");
+            }
+            strcat(status, "         ");
 
+            xsetroot(status);
             printf("%s\n", status);
         }
 

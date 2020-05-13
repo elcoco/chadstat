@@ -9,32 +9,11 @@
 #define CS_OK       "[3]"
 #define CS_ERROR    "[4]"
 
-//#define CS_NORMAL   ""
-//#define CS_SELECTED ""
-//#define CS_WARNING  ""
-//#define CS_URGENT   ""
-
-// minimum timeout inbetween checks, in seconds
-#define DATETIME_TIMEOUT            5
-#define BATTERY_TIMEOUT             30 
-#define HTTP_TIMEOUT                30 
-#define VOLUME_TIMEOUT              1
-#define WIRELESS_TIMEOUT            3
-#define MPD_TIMEOUT                 3
-
-#define VOLUME_BAR_LEN             10
-
-#define BATTERY_TRESHOLD            10                   // change color below percentage
 #define BATTERY_PATH                "/sys/class/power_supply"
-#define BATTERY_BAR_LEN             10
-
 #define DATETIME_FMT                "%a %d:%m:%Y %H:%M"
-
 #define HTTP_MAX_TIMEOUT            1L                   // max seconds before timeout
 #define HTTP_SEP_CHR                ':'
-
 #define WIRELESS_PATH               "/proc/net/wireless" // don't change
-#define WIRELESS_STRENGTH_TRESHOLD  65                   // change color below percentage
 
 
 typedef struct {
