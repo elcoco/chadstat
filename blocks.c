@@ -194,3 +194,64 @@ bool get_battery(block_t* block) {
     fclose(fp);
     return is_changed(block);
 }
+
+int8_t do_request(const char* url, long* response_code) {
+    CURL *curl = curl_easy_init();
+    if(curl) {
+        CURLcode res;
+        curl_easy_setopt(curl, CURLOPT_URL, url);
+        curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, HTTP_MAX_TIMEOUT);
+
+        res = curl_easy_perform(curl);
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, response_code);
+        curl_easy_cleanup(curl);
+        return res;
+    }
+    return -1;
+}
+
+bool get_sites(block_t* block) {
+    if (! is_elapsed(block)) {
+        block->is_changed = false;
+        return false;
+    }
+
+    // get lenght of sites array
+    uint8_t sites_len = sizeof(sites_arr)/sizeof(sites_arr[0]);
+
+    char buffer[50] = {'\0'};
+
+    for (uint8_t i=0 ; i<sites_len ; i++) {
+        site_t site = sites_arr[i];
+
+        char text[5] = {'\0'};
+        sprintf(text, "%s", site.id);
+
+        long response_code;
+        long* ptr = &response_code;
+
+        uint8_t res = do_request(site.url, ptr);
+
+        char* color = {'\0'};
+        
+        if (res == CURLE_OK && site.res_code == response_code)
+            color = COL_HTTP_UP;
+        else if (res == CURLE_OPERATION_TIMEDOUT)
+            color = COL_HTTP_TIMEDOUT;
+        else
+            color = COL_HTTP_DOWN;
+
+        strcat(buffer, color);
+        strcat(buffer, site.id);
+
+        if (i < sites_len-1) {
+            strcat(buffer, HTTP_SEP_COLOR);
+            strcat(buffer, ":");
+        }
+    }
+
+    strcpy(block->text, buffer);
+    return is_changed(block);
+}

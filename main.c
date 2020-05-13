@@ -94,24 +94,27 @@ int main(int argc, char **argv) {
     block_t datetime;
     block_t volume;
     block_t battery;
+    block_t sites;
 
     datetime.timeout = 10;
     volume.timeout = 1;
     battery.timeout = 1;
+    sites.timeout = 30;
 
-    // return changed
-    //
 
     while (1) {
         bool is_changed = false;
 
-        if (get_datetime(&datetime)) is_changed = true;
-        if (get_volume(&volume))     is_changed = true;
-        if (get_battery(&battery))     is_changed = true;
+        if (get_datetime(&datetime))    is_changed = true;
+        if (get_volume(&volume))        is_changed = true;
+        if (get_battery(&battery))      is_changed = true;
+        if (get_sites(&sites))          is_changed = true;
 
         if (is_changed) {
             char status[500] = {'\0'};
 
+            strcat(status, sites.text);
+            strcat(status, "  ");
             strcat(status, battery.text);
             strcat(status, "  ");
             strcat(status, volume.text);
