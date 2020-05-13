@@ -1,10 +1,3 @@
-#include <stdio.h>
-#include <stdint.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdbool.h> // bool
-
 #include <X11/Xlib.h>
 
 #include "blocks.h"
@@ -12,24 +5,23 @@
 
 
 static void xsetroot(const char *name);
-void die(char* msg);
-void parse_args(int*, char** argv);
-void usage();
-int main();
+static void die(char* msg);
+static void parse_args(int*, char** argv);
+static void usage();
 
 uint8_t timeout = DEAULT_TIMEOUT;
 
-void die(char* msg) {
+static void die(char *msg) {
     printf("%s", msg);
     exit(0);
 }
 
-void usage() {
+static void usage() {
     printf("dface [OPTIONS]\n");
     exit(0);
 }
 
-void parse_args(int* argc, char** argv) {
+static void parse_args(int *argc, char **argv) {
     char c;
     bool do_exit = false;
 
@@ -65,7 +57,6 @@ void parse_args(int* argc, char** argv) {
     } 
 }
 
-
 static void xsetroot(const char *name){
         Display *dpy;
 
@@ -87,12 +78,14 @@ int main(int argc, char **argv) {
     block_t battery;
     block_t sites;
     block_t wireless;
+    block_t mpd;
 
     datetime.timeout = DATETIME_TIMEOUT;
     volume.timeout   = VOLUME_TIMEOUT;
     battery.timeout  = BATTERY_TIMEOUT;
     sites.timeout    = HTTP_TIMEOUT;
     wireless.timeout = WIRELESS_TIMEOUT;
+    mpd.timeout      = MPD_TIMEOUT;
 
     // reset
     xsetroot("");
@@ -106,15 +99,17 @@ int main(int argc, char **argv) {
         if (get_battery(&battery))      is_changed = true;
         if (get_sites(&sites))          is_changed = true;
         if (get_wireless(&wireless))    is_changed = true;
+        if (get_mpd(&mpd))              is_changed = true;
 
         if (is_changed) {
             char status[MAXSTRING+1] = {'\0'};
 
-            int16_t r = snprintf(status, MAXSTRING, "%s  %s  %s  %s  %s      ", sites.text,
-                                                                          battery.text,
-                                                                          volume.text,
-                                                                          wireless.text,
-                                                                          datetime.text);
+            int16_t r = snprintf(status, MAXSTRING, "%s %s %s %s %s  %s           ", mpd.text,
+                                                                                     sites.text,
+                                                                                     battery.text,
+                                                                                     volume.text,
+                                                                                     wireless.text,
+                                                                                     datetime.text);
             if (r == -1)
                 xsetroot("SNPRINTF ENCODING ERROR");
             else if ( r >= MAXSTRING)
@@ -123,25 +118,9 @@ int main(int argc, char **argv) {
                 xsetroot(status);
 
             printf("%s\n", status);
-                
         }
 
         sleep(timeout);
     }
     return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

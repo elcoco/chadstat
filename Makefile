@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -lasound -lcurl -Wall -lX11
+CFLAGS = -lasound -lcurl -Wall -lX11 -lmpdclient
 
 # target: dependencies
 # 	  action

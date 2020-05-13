@@ -1,33 +1,33 @@
 #pragma once
 
 #include <stdio.h>
-#include <stdint.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
 #include <stdbool.h>        // bool
-
 #include <stdint.h>         // uint types
-#include <time.h>           // datetime info
 
 #include <curl/curl.h>      // sites up?
 
-#include <sys/statvfs.h>    // fs info
 #include <dirent.h>         // battery info
 #include <alsa/asoundlib.h> // alsa master volume info
 
 // wireless
 #include <sys/ioctl.h>
 #include <linux/wireless.h>
-
-// get network interfaces
-#include <ifaddrs.h>
+#include <ifaddrs.h>        // get network interfaces
 #include <netdb.h>
+
+#include <mpd/client.h>     // mpd
 
 #include "utils.h"
 #include "config.h"
 
 
+typedef struct {
+    uint8_t  timeout;
+    bool     is_changed;
+    uint32_t t_last;
+    char     text[50];
+    char     text_prev[50];
+} block_t;
 
 bool is_changed(block_t* block);
 bool is_elapsed(block_t* block);
@@ -42,4 +42,4 @@ bool get_volume(block_t* block);
 bool get_battery(block_t* block);
 bool get_sites(block_t* block);
 bool get_wireless(block_t* block);
-
+bool get_mpd(block_t *block);

@@ -1,10 +1,7 @@
 #pragma once
 
-#include <stdbool.h> // bool
-#include <stdint.h>
-
-#include "config.h"
 #include "blocks.h"
+#include "config.h"
 
 
 int8_t do_request(const char* url, long* response_code);
