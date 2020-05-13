@@ -25,9 +25,8 @@
 #include <netdb.h>
 
 
-#include "config.h"
 #include "utils.h"
-
+#include "config.h"
 
 
 typedef struct {
@@ -47,17 +46,5 @@ void get_strgraph(block_t* block, char* str, uint8_t percent, char* color);
 bool get_datetime(block_t* block);
 bool get_volume(block_t* block);
 bool get_battery(block_t* block);
-
-int8_t do_request(const char* url, long* response_code);
 bool get_sites(block_t* block);
-
-
-
-/*
-struct block_t get_wireless(char* color1, char* color2);
-struct block_t get_volume();
-struct block_t get_battery();
-struct block_t get_fs();
-struct block_t get_sites();
-*/
 

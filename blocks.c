@@ -23,7 +23,6 @@ bool is_changed(block_t* block) {
     }
 }
 
-
 void get_graph(block_t* block, uint8_t graph_len, uint8_t percent, char* color) {
     if (percent > 100)
         percent = 100;
@@ -82,6 +81,7 @@ void get_strgraph(block_t* block, char* str, uint8_t percent, char* color) {
     else
         sprintf(block->text, "%s%s%s%s", color, l_text, CS_NORMAL, r_text);
 }
+
 
 bool get_datetime(block_t* block) {
     if (! is_elapsed(block)) {
@@ -192,23 +192,6 @@ bool get_battery(block_t* block) {
 
     fclose(fp);
     return is_changed(block);
-}
-
-int8_t do_request(const char* url, long* response_code) {
-    CURL *curl = curl_easy_init();
-    if(curl) {
-        CURLcode res;
-        curl_easy_setopt(curl, CURLOPT_URL, url);
-        curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
-        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, HTTP_MAX_TIMEOUT);
-
-        res = curl_easy_perform(curl);
-        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, response_code);
-        curl_easy_cleanup(curl);
-        return res;
-    }
-    return -1;
 }
 
 bool get_sites(block_t* block) {
