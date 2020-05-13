@@ -8,6 +8,7 @@
 #include <X11/Xlib.h>
 
 #include "blocks.h"
+#include "config.h"
 
 
 
@@ -96,10 +97,10 @@ int main(int argc, char **argv) {
     block_t battery;
     block_t sites;
 
-    datetime.timeout = 10;
-    volume.timeout = 1;
-    battery.timeout = 1;
-    sites.timeout = 30;
+    datetime.timeout = DATETIME_TIMEOUT;
+    volume.timeout   = VOLUME_TIMEOUT;
+    battery.timeout  = BATTERY_TIMEOUT;
+    sites.timeout    = HTTP_TIMEOUT;
 
 
     while (1) {
@@ -114,18 +115,18 @@ int main(int argc, char **argv) {
             char status[500] = {'\0'};
 
             strcat(status, sites.text);
-            strcat(status, "  ");
+            strcat(status, BLOCK_SEPARATOR);
             strcat(status, battery.text);
-            strcat(status, "  ");
+            strcat(status, BLOCK_SEPARATOR);
             strcat(status, volume.text);
-            strcat(status, "  ");
+            strcat(status, BLOCK_SEPARATOR);
             strcat(status, datetime.text);
 
             init_x11();
             XStoreName(dpy, root, status);
             close_x11();
 
-            printf(">>> changed %s\n", status);
+            printf(">>> %s\n", status);
         }
 
 

@@ -25,34 +25,10 @@
 #include <netdb.h>
 
 
-//#include "config.h"
+#include "config.h"
 #include "utils.h"
 
 
-#define DATETIME_FMT                "%A %d:%m:%Y %H:%M"
-
-#define CS_NORMAL   ""
-#define CS_SELECTED ""
-#define CS_WARNING  ""
-#define CS_URGENT   ""
-
-#define COL_DATETIME         CS_NORMAL
-#define COL_VOLUME           CS_SELECTED
-#define COL_BATTERY_NORMAL   CS_WARNING
-#define COL_BATTERY_CRITICAL CS_SELECTED
-
-#define COL_HTTP_UP          CS_WARNING
-#define COL_HTTP_TIMEDOUT    CS_SELECTED
-#define COL_HTTP_DOWN        CS_URGENT
-
-#define BATTERY_TRESHOLD            10                   // change color below percentage
-#define BATTERY_CHECK_SECONDS       30                   // seconds inbetween battery checks 
-#define BATTERY_PATH                   "/sys/class/power_supply"
-
-#define HTTP_CHECK_SECONDS          30                   // seconds inbetween site up checks 
-#define HTTP_MAX_TIMEOUT            1L                   // max seconds before timeout
-#define HTTP_SEP_CHR                :
-#define HTTP_SEP_COLOR              CS_NORMAL
 
 typedef struct {
     uint32_t    t_last;
@@ -75,21 +51,7 @@ bool get_battery(block_t* block);
 int8_t do_request(const char* url, long* response_code);
 bool get_sites(block_t* block);
 
-typedef struct {
-    const char* url;
-    const char* id;
-    long res_code;       // expected response code
-} site_t;
 
-// check these sites and their respective status codes.
-static site_t sites_arr[] = {
-//   URL                                ID   EXPECTED STATUS CODE
-    {"https://monutor.com",             "MO",   200},
-    {"https://api.monutor.com",         "API",  404},
-    {"https://dashboard.monutor.com",   "DA",   200},
-    {"https://rocketchat.monutor.com",  "RC",   200},
-    {"https://nc.freeradical.nl",       "NC",   200}
-};
 
 /*
 struct block_t get_wireless(char* color1, char* color2);

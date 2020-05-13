@@ -7,7 +7,6 @@ bool is_elapsed(block_t* block) {
 
     if ((t_cur - block->t_last) > block->timeout) {
         block->t_last = t_cur;
-        printf("elapsed\n");
         return true;
     }
     return false;
@@ -247,7 +246,7 @@ bool get_sites(block_t* block) {
         strcat(buffer, site.id);
 
         if (i < sites_len-1) {
-            strcat(buffer, HTTP_SEP_COLOR);
+            strcat(buffer, COL_HTTP_SEP);
             strcat(buffer, ":");
         }
     }
