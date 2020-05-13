@@ -10,19 +10,15 @@
 #include "blocks.h"
 #include "config.h"
 
+#define MAXSTRING 512
 
-
+static void xsetroot(const char *name);
 void die(char* msg);
 void parse_args(int*, char** argv);
 void usage();
 int main();
 
-uint8_t timeout = 3;
-
-// x11
-Display* dpy;
-int screen;
-Window root;
+uint8_t timeout = DEAULT_TIMEOUT;
 
 
 void die(char* msg) {
@@ -69,24 +65,20 @@ void parse_args(int* argc, char** argv) {
         sprintf(msg, "ERROR: unknown argument: %s\n", argv[optind]);
         die(msg);  
     } 
-
 }
 
-void init_x11() {
-    dpy = XOpenDisplay(NULL);
 
-    if (dpy == NULL) 
-    {
-        fprintf(stderr, "Cannot open display\n");
-        exit(1);
-    }
+static void xsetroot(const char *name){
+        Display *dpy;
 
-    screen = DefaultScreen(dpy);
-    root = RootWindow(dpy, screen);
-}
+        if (( dpy = XOpenDisplay(0x0)) == NULL )
+            die("Can't open display!\n");
 
-void close_x11() {
-	XCloseDisplay(dpy);	
+        XStoreName(dpy, DefaultRootWindow(dpy), name);
+        XSync(dpy, 0);
+        //XFlush(dpy);
+
+        XCloseDisplay(dpy);
 }
 
 int main(int argc, char **argv) {
@@ -96,11 +88,16 @@ int main(int argc, char **argv) {
     block_t volume;
     block_t battery;
     block_t sites;
+    block_t wireless;
 
     datetime.timeout = DATETIME_TIMEOUT;
     volume.timeout   = VOLUME_TIMEOUT;
     battery.timeout  = BATTERY_TIMEOUT;
     sites.timeout    = HTTP_TIMEOUT;
+    wireless.timeout = WIRELESS_TIMEOUT;
+
+    // reset
+    xsetroot("");
 
 
     while (1) {
@@ -110,26 +107,26 @@ int main(int argc, char **argv) {
         if (get_volume(&volume))        is_changed = true;
         if (get_battery(&battery))      is_changed = true;
         if (get_sites(&sites))          is_changed = true;
+        if (get_wireless(&wireless))    is_changed = true;
 
         if (is_changed) {
-            char status[500] = {'\0'};
+            char status[MAXSTRING+1] = {'\0'};
 
-            strcat(status, sites.text);
-            strcat(status, BLOCK_SEPARATOR);
-            strcat(status, battery.text);
-            strcat(status, BLOCK_SEPARATOR);
-            strcat(status, volume.text);
-            strcat(status, BLOCK_SEPARATOR);
-            strcat(status, datetime.text);
+            int16_t r = snprintf(status, MAXSTRING, "%s  %s  %s  %s  %s", sites.text,
+                                                                      battery.text,
+                                                                      volume.text,
+                                                                      wireless.text,
+                                                                      datetime.text);
+            if (r == -1)
+                xsetroot("SNPRINTF ENCODING ERROR");
+            else if ( r >= MAXSTRING)
+                xsetroot("STATUS EXCEEDS MAXLENGTH");
+            else
+                xsetroot(status);
 
-            init_x11();
-            XStoreName(dpy, root, status);
-            close_x11();
-
-            printf(">>> %s\n", status);
+            printf("%s\n", status);
+                
         }
-
-
 
         sleep(timeout);
     }

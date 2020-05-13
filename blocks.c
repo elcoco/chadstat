@@ -23,6 +23,10 @@ bool is_changed(block_t* block) {
     }
 }
 
+void set_error(block_t* block, char* msg) {
+    sprintf(block->text, "%s%s", CS_URGENT, msg);
+}
+
 void get_graph(block_t* block, uint8_t graph_len, uint8_t percent, char* color) {
     if (percent > 100)
         percent = 100;
@@ -81,7 +85,6 @@ void get_strgraph(block_t* block, char* str, uint8_t percent, char* color) {
     else
         sprintf(block->text, "%s%s%s%s", color, l_text, CS_NORMAL, r_text);
 }
-
 
 bool get_datetime(block_t* block) {
     if (! is_elapsed(block)) {
@@ -147,7 +150,7 @@ bool get_battery(block_t* block) {
     DIR *dr = opendir(path);
 
     if (dr == NULL) {
-        //set_error("DIR ERROR");
+        set_error(block, "DIR ERROR");
         closedir(dr);
         return false;
     }
@@ -168,7 +171,7 @@ bool get_battery(block_t* block) {
 
     // exit if file doesn't exist
     if (access(capacity_path, F_OK ) == -1) {
-        //set_error("CAPACITY FILE ERROR");
+        set_error(block, "CAPACITY FILE ERROR");
         return false;
     }
 
@@ -178,7 +181,7 @@ bool get_battery(block_t* block) {
 
     fp = fopen(capacity_path, "r");
     if (fp == NULL) {
-        //set_error("CAPACITY READ ERROR");
+        set_error(block, "CAPACITY READ ERROR");
     }
     else {
         fgets(buffer, 4, (FILE*)fp);
@@ -203,27 +206,24 @@ bool get_sites(block_t* block) {
     // get lenght of sites array
     uint8_t sites_len = sizeof(sites_arr)/sizeof(sites_arr[0]);
 
-    char buffer[50] = {'\0'};
+    char buffer[50];
 
     for (uint8_t i=0 ; i<sites_len ; i++) {
         site_t site = sites_arr[i];
-
-        char text[5] = {'\0'};
-        sprintf(text, "%s", site.id);
 
         long response_code;
         long* ptr = &response_code;
 
         uint8_t res = do_request(site.url, ptr);
 
-        char* color = {'\0'};
+        char color[5];
         
         if (res == CURLE_OK && site.res_code == response_code)
-            color = COL_HTTP_UP;
+            strcpy(color, COL_HTTP_UP);
         else if (res == CURLE_OPERATION_TIMEDOUT)
-            color = COL_HTTP_TIMEDOUT;
+            strcpy(color, COL_HTTP_TIMEDOUT);
         else
-            color = COL_HTTP_DOWN;
+            strcpy(color, COL_HTTP_DOWN);
 
         strcat(buffer, color);
         strcat(buffer, site.id);
@@ -235,5 +235,66 @@ bool get_sites(block_t* block) {
     }
 
     strcpy(block->text, buffer);
+    return is_changed(block);
+}
+        
+bool get_wireless(block_t* block) {
+    if (! is_elapsed(block)) {
+        block->is_changed = false;
+        return false;
+    }
+
+    // find wireless if address
+    char ifaddr[20] = {'\0'};
+    if (get_ifaddr(ifaddr) == -1){
+        set_error(block, "IF ERROR");
+        return is_changed(block);
+    }
+
+    int8_t signal;
+
+    if ((signal=get_signal_strength(ifaddr)) == -1) {
+        set_error(block, "SIGNAL ERROR");
+        return is_changed(block);
+    }
+
+    int sockfd;
+    //char * id;
+    //id = char[IW_ESSID_MAX_SIZE+1];
+
+    char id[IW_ESSID_MAX_SIZE+1];
+
+    struct iwreq wreq;
+    memset(&wreq, 0, sizeof(struct iwreq));
+    wreq.u.essid.length = IW_ESSID_MAX_SIZE+1;
+
+    strcpy(wreq.ifr_name, ifaddr);
+
+    if((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+        set_error(block, "SOCKET ERROR");
+        close(sockfd);
+        return is_changed(block);
+    }
+
+    // ioctl manipulates device parameters of special files
+    wreq.u.essid.pointer = id;
+
+    if (ioctl(sockfd,SIOCGIWESSID, &wreq) == -1) {
+        set_error(block, "IOCTL ERROR");
+        return is_changed(block);
+    }
+    else {
+        if (strlen((char *)wreq.u.essid.pointer) > 0) {
+            if (signal > WIRELESS_STRENGTH_TRESHOLD)
+                get_strgraph(block, (char *)wreq.u.essid.pointer, signal, COL_WIRELESS_NORMAL);
+            else
+                get_strgraph(block, (char *)wreq.u.essid.pointer, signal, COL_WIRELESS_LOW);
+        }
+        else {
+            set_error(block, "DISCONNECTED");
+            return is_changed(block);
+        }
+    }
+    close(sockfd);
     return is_changed(block);
 }
