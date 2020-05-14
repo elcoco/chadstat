@@ -1,7 +1,7 @@
 #include <X11/Xlib.h>
 
 #include "blocks.h"
-#include "config.h"
+//#include "config.h"
 
 
 static void xsetroot(const char *name);

@@ -18,7 +18,6 @@
 #include <mpd/client.h>     // mpd
 
 #include "utils.h"
-#include "config.h"
 
 
 typedef struct block_t {
@@ -37,6 +36,11 @@ typedef struct block_t {
     char     text_prev[50];
 } block_t;
 
+typedef struct {
+    const char* url;
+    const char* id;
+    long res_code;       // expected response code
+} site_t;
 
 
 bool is_changed(block_t* block);
@@ -54,12 +58,5 @@ bool get_sites(block_t* block);
 bool get_wireless(block_t* block);
 bool get_mpd(block_t *block);
 
-static block_t block_arr[] = {
-//    NAME        ENABLED TIMEOUT  FUNC          TRESHOLD  MAXLEN  SEPARATOR
-    { "mpd",      true,       5,   get_mpd,     -1,       30,     " "},
-    { "http",     true,       30,  get_sites,    -1,       -1,     " "},
-    { "battery",  true,       30,  get_battery,  10,       10,     " "},
-    { "volume",   true,        3,  get_volume,   -1,       10,     " "},
-    { "wireless", true,        3,  get_wireless, 50,       -1,     "  "},
-    { "datetime", true,       5,  get_datetime,  -1,       -1,     " "}
-};
+// allow config.h to access above functions
+#include "config.h"

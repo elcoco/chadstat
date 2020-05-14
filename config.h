@@ -16,11 +16,6 @@
 #define WIRELESS_PATH               "/proc/net/wireless" // don't change
 
 
-typedef struct {
-    const char* url;
-    const char* id;
-    long res_code;       // expected response code
-} site_t;
 
 // check these sites and their respective status codes.
 static site_t sites_arr[] = {
@@ -30,4 +25,14 @@ static site_t sites_arr[] = {
     {"https://dashboard.monutor.com",   "DA",   200},
     {"https://rocketchat.monutor.com",  "RC",   200},
     {"https://nc.chmod777.org",         "NC",   200}
+};
+
+static block_t block_arr[] = {
+//    NAME        ENABLED TIMEOUT  FUNC      TRESHOLD  MAXLEN  SEPARATOR
+    { "mpd",      true,        5,  get_mpd,       -1,      40,     " "},
+    { "http",     true,       30,  get_sites,     -1,      -1,     " "},
+    { "battery",  true,       30,  get_battery,   10,      10,     " "},
+    { "volume",   true,        3,  get_volume,    -1,      10,     " "},
+    { "wireless", true,        3,  get_wireless,  50,      -1,     "  "},
+    { "datetime", true,        5,  get_datetime,  -1,      -1,     " "}
 };
