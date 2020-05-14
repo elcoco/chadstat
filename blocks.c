@@ -31,7 +31,7 @@ void get_graph(Block *block, uint8_t len, uint8_t perc, char* col) {
     char graph_chr2 = '|';
     char l_text[21] = {'\0'};
     char r_text[21] = {'\0'};
-    len = len++;
+    len = len + 1;
     uint8_t i;
 
     if (perc > 100)
