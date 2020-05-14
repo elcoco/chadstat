@@ -293,6 +293,14 @@ bool get_wireless(Block *block) {
 }
 
 bool get_mpd(Block *block) {
+	struct mpd_connection *conn;
+	struct mpd_status *status;
+    struct mpd_song   *song;
+	const char *artist;
+	const char *title;
+	const char *track;
+    char col[10];
+
     if (!block->enabled) {
         strcpy(block->text, "");
         return false;
@@ -301,8 +309,6 @@ bool get_mpd(Block *block) {
     if (! is_elapsed(block))
         return false;
 
-	struct mpd_connection *conn;
-
 	conn = mpd_connection_new(NULL, 0, 30000);
 
 	if (mpd_connection_get_error(conn) != MPD_ERROR_SUCCESS) {
@@ -310,9 +316,6 @@ bool get_mpd(Block *block) {
         strcpy(block->text, "MPD CONNECTION ERROR");
         return is_changed(block);
 	}
-
-	struct mpd_status *status;
-    struct mpd_song   *song;
 
     mpd_command_list_begin(conn, true);
     mpd_send_status(conn);
@@ -327,7 +330,7 @@ bool get_mpd(Block *block) {
     }
 
     if ( mpd_status_get_state(status) < MPD_STATE_PLAY) {
-        strcpy(block->text, "");
+        strcpy(block->text, "STOPPED");
         mpd_connection_free(conn);
         return is_changed(block);
     }
@@ -343,16 +346,13 @@ bool get_mpd(Block *block) {
 
     mpd_response_next(conn);
 
-	const char *artist;
-	const char *title;
-	const char *track;
-
     while ((song = mpd_recv_song(conn)) != NULL) {
         artist = mpd_song_get_tag(song, MPD_TAG_ARTIST, 0);
         title = mpd_song_get_tag(song, MPD_TAG_TITLE, 0);
         track = mpd_song_get_tag(song, MPD_TAG_TRACK, 0);
+        strcpy(col, (mpd_status_get_state(status) == MPD_STATE_PLAY) ? CS_OK : CS_NORMAL);
 
-        snprintf(block->text, block->maxlen, "%s%s - [%s] %s", CS_NORMAL, artist, track, title);
+        snprintf(block->text, block->maxlen, "%s%s - [%s] %s", col, artist, track, title);
         mpd_song_free(song);
     }
     mpd_connection_free(conn);

@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
         }
 
         if (is_changed) {
-            char status[MAXSTRING+1] = {'\0'};
+            char status[MAXSTRING+1] = "";
 
             for (i=0 ; i<blen ; i++) {
                 Block block = blocks[i];
