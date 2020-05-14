@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
         }
 
         if (is_changed) {
-            char status[MAXSTRING+1] = "";
+            char status[MAXSTRING+1] = {'\0'};
 
             for (i=0 ; i<blen ; i++) {
                 Block block = blocks[i];

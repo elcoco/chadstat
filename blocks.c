@@ -351,7 +351,11 @@ bool get_mpd(Block *block) {
         track = mpd_song_get_tag(song, MPD_TAG_TRACK, 0);
         strcpy(col, (mpd_status_get_state(status) == MPD_STATE_PLAY) ? CS_OK : CS_NORMAL);
 
-        snprintf(block->text, block->maxlen, "%s%s - [%s] %s", col, artist, track, title);
+        if (artist == NULL && track == NULL)
+            snprintf(block->text, block->maxlen, "%s%s", col, title);
+        else
+            snprintf(block->text, block->maxlen, "%s%s - [%s] %s", col, artist, track, title);
+
         mpd_song_free(song);
     }
     mpd_connection_free(conn);
