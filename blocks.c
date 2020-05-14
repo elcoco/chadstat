@@ -132,6 +132,7 @@ bool get_battery(Block *block) {
     char buf[100] = {'\0'};
     char* col;
     DIR *dr;
+    strcpy(pwrpath, BATTERY_PATH);
 
     if (!block->enabled) {
         strcpy(block->text, "");
@@ -141,7 +142,6 @@ bool get_battery(Block *block) {
     if (! is_elapsed(block))
         return false;
 
-    strcpy(pwrpath, BATTERY_PATH);
     dr = opendir(pwrpath);
 
     if (dr == NULL) {
@@ -357,5 +357,66 @@ bool get_mpd(Block *block) {
     }
     mpd_connection_free(conn);
 
+    return is_changed(block);
+}
+
+bool get_maildirs(Block *block) {
+    struct dirent *de;  // Pointer for directory entry 
+    char buf[100] = {'\0'};
+    DIR *dr;
+    uint8_t mdlen = sizeof(maildirs)/sizeof(maildirs[0]);
+    uint32_t fc;
+    uint8_t i;
+    Maildir *md;
+    char *col;
+    char fcbuf[10];
+
+    if (!block->enabled) {
+        strcpy(block->text, "");
+        return false;
+    }
+
+    if (! is_elapsed(block))
+        return false;
+
+    md = &maildirs[0];
+
+    for (i=0 ; i<mdlen ; i++) {
+        dr = opendir(md->path);
+
+        if (dr == NULL) {
+            set_error(block, "MAILDIR ERROR");
+            closedir(dr);
+            return false;
+        }
+
+        fc = 0;
+        while ((de = readdir(dr)) != NULL) {
+
+            if (strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0) {
+                fc++;
+            }
+        }
+
+        col = (fc > 0) ? CS_OK : CS_NORMAL;
+
+        sprintf(fcbuf, "%d", fc);
+
+        strcat(buf, col);
+        strcat(buf, md->id);
+        strcat(buf, CS_NORMAL);
+        strcat(buf, fcbuf);
+
+        if (i < mdlen-1)
+            strcat(buf, ":");
+
+        md++;
+
+        closedir(dr);
+    }
+
+
+    printf("%s\n", buf);
+    strcpy(block->text, buf);
     return is_changed(block);
 }

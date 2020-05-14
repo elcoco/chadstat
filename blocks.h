@@ -42,6 +42,10 @@ typedef struct {
     long res_code;       // expected response code
 } Site;
 
+typedef struct {
+    const char* path;
+    const char* id;
+} Maildir;
 
 bool is_changed(Block *block);
 bool is_elapsed(Block *block);
@@ -57,6 +61,7 @@ bool get_battery(Block *block);
 bool get_sites(Block *block);
 bool get_wireless(Block *block);
 bool get_mpd(Block *block);
+bool get_maildirs(Block *block);
 
 // allow config.h to access above functions
 #include "config.h"
