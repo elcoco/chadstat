@@ -337,7 +337,6 @@ bool get_mpd(Block *block) {
 
     mpd_status_free(status);
 
-
     if (mpd_connection_get_error(conn) != MPD_ERROR_SUCCESS) {
         mpd_connection_free(conn);
         strcpy(block->text, "MPD CONNECTION ERROR");

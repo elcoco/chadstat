@@ -2,7 +2,6 @@
 
 #include "blocks.h"
 
-
 static void xsetroot(const char *name);
 static void die(char* msg);
 static void parse_args(int*, char** argv);
