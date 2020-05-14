@@ -1,7 +1,6 @@
 #include "blocks.h"
 
-
-bool is_elapsed(block_t* block) {
+bool is_elapsed(Block *block) {
     // check if time has elapsed, reset time of so
     uint32_t t_cur = time(NULL);
 
@@ -12,7 +11,7 @@ bool is_elapsed(block_t* block) {
     return false;
 }
 
-bool is_changed(block_t* block) {
+bool is_changed(Block *block) {
     // set flag if value has changed
     if (strcmp(block->text, block->text_prev) == 0) {
         return false;
@@ -23,67 +22,60 @@ bool is_changed(block_t* block) {
     }
 }
 
-void set_error(block_t* block, char* msg) {
+void set_error(Block *block, char* msg) {
     sprintf(block->text, "%s%s", CS_ERROR, msg);
 }
 
-void get_graph(block_t* block, uint8_t graph_len, uint8_t percent, char* color) {
-    if (percent > 100)
-        percent = 100;
-    int8_t level = (percent / 100.0) * graph_len;
-
+void get_graph(Block *block, uint8_t len, uint8_t perc, char* col) {
     char graph_chr1 = '|';
     char graph_chr2 = '|';
-
-    graph_len = graph_len++;
-
     char l_text[21] = {'\0'};
     char r_text[21] = {'\0'};
-    //char l_text[graph_len+1] = {'\0'};
-    //char r_text[graph_len+1] = {'\0'};
+    len = len++;
+    uint8_t i;
 
-    for (uint8_t i=0 ; i<level ; i++) {
+    if (perc > 100)
+        perc = 100;
+
+    int8_t level = (perc / 100.0) * len;
+
+    for (i=0 ; i<level ; i++) {
         l_text[i] = graph_chr1;
     }
-    for (uint8_t i=0 ; i<graph_len-level ; i++) {
+    for (i=0 ; i<len-level ; i++) {
         r_text[i] = graph_chr2;
     }
-
-    // handle case where level is maximum graph_len, second line would be empty and therefore skipped and screw up spacing between blocks (see i3 input protocol)
-    if (level == graph_len)
-        sprintf(block->text, "%s%s", color, l_text);
-    else
-        sprintf(block->text, "%s%s%s%s", color, l_text, CS_NORMAL, r_text);
+    sprintf(block->text, "%s%s%s%s", col, l_text, CS_NORMAL, r_text);
 }
 
-void get_strgraph(block_t* block, char* str, uint8_t percent, char* color) {
-    if (percent > 100)
-        percent = 100;
-
-    uint8_t graph_len = strlen(str);
-    int8_t level = (percent / 100.0) * graph_len;
-
+void get_strgraph(Block *block, char* str, uint8_t perc, char* col) {
+    uint8_t len = strlen(str);
     char l_text[50] = {'\0'};
     char r_text[50] = {'\0'};
-
     uint8_t index = 0;
-    for (uint8_t i=0 ; i<level ; i++) {
+    uint8_t i;
+
+    if (perc > 100)
+        perc = 100;
+
+    int8_t level = (perc / 100.0) * len;
+
+    for (i=0 ; i<level ; i++) {
         l_text[i] = str[index];
         index++;
     }
-    for (uint8_t i=0 ; i<graph_len-level ; i++) {
+    for (i=0 ; i<len-level ; i++) {
         r_text[i] = str[index];
         index++;
     }
-
-    // handle case where level is maximum graph_len, second line would be skipped and screw up spacing between blocks (see i3 input protocol)
-    if (level == graph_len)
-        sprintf(block->text, "%s%s", color, l_text);
-    else
-        sprintf(block->text, "%s%s%s%s", color, l_text, CS_NORMAL, r_text);
+    sprintf(block->text, "%s%s%s%s", col, l_text, CS_NORMAL, r_text);
 }
 
-bool get_datetime(block_t* block) {
+bool get_datetime(Block *block) {
+    time_t t = time(NULL);            // 32bit integer representing time
+    struct tm tm = *localtime(&t);    // get struct with time data
+    char buf[80];
+
     if (!block->enabled) {
         strcpy(block->text, "");
         return false;
@@ -92,16 +84,20 @@ bool get_datetime(block_t* block) {
     if (! is_elapsed(block))
         return false;
 
-    time_t t = time(NULL);            // 32bit integer representing time
-    struct tm tm = *localtime(&t);    // get struct with time data
-    char buffer[80];
-
-    strftime(buffer, 100, DATETIME_FMT, &tm);
-    sprintf(block->text, "%s%s", CS_NORMAL, buffer);
+    strftime(buf, 100, DATETIME_FMT, &tm);
+    sprintf(block->text, "%s%s", CS_NORMAL, buf);
     return is_changed(block);
 }
 
-bool get_volume(block_t* block) {
+bool get_volume(Block *block) {
+    long min, max;
+    long level;
+    uint16_t volume;
+    snd_mixer_t *handle;
+    snd_mixer_selem_id_t *sid;
+    const char *card = "default";
+    const char *selem_name = "Master";
+
     if (!block->enabled) {
         strcpy(block->text, "");
         return false;
@@ -109,16 +105,6 @@ bool get_volume(block_t* block) {
 
     if (! is_elapsed(block))
         return false;
-
-    long min, max;
-    long level;
-    uint16_t volume;
-
-    snd_mixer_t *handle;
-    snd_mixer_selem_id_t *sid;
-
-    const char *card = "default";
-    const char *selem_name = "Master";
 
     snd_mixer_open(&handle, 0);
     snd_mixer_attach(handle, card);
@@ -138,7 +124,15 @@ bool get_volume(block_t* block) {
     return is_changed(block);
 }
 
-bool get_battery(block_t* block) {
+bool get_battery(Block *block) {
+    char pwrpath[100] = {'\0'};
+    char cappath[100] = {'\0'};
+    struct dirent *de;  // Pointer for directory entry 
+    FILE *fp;
+    char buf[100] = {'\0'};
+    char* col;
+    DIR *dr;
+
     if (!block->enabled) {
         strcpy(block->text, "");
         return false;
@@ -147,13 +141,8 @@ bool get_battery(block_t* block) {
     if (! is_elapsed(block))
         return false;
 
-    char path[100] = {'\0'};
-    char capacity_path[100] = {'\0'};
-
-    strcpy(path, BATTERY_PATH);
-
-    struct dirent *de;  // Pointer for directory entry 
-    DIR *dr = opendir(path);
+    strcpy(pwrpath, BATTERY_PATH);
+    dr = opendir(pwrpath);
 
     if (dr == NULL) {
         set_error(block, "DIR ERROR");
@@ -164,46 +153,47 @@ bool get_battery(block_t* block) {
     // find dir containing BAT*
     while ((de = readdir(dr)) != NULL) {
         if (strstr(de->d_name, "BAT") != NULL) {
-            strcat(path, "/");
-            strcat(path, de->d_name);
+            strcat(pwrpath, "/");
+            strcat(pwrpath, de->d_name);
             break;
         }
     }
 
     closedir(dr);
 
-    strcat(capacity_path, path);
-    strcat(capacity_path, "/capacity");
+    strcat(cappath, pwrpath);
+    strcat(cappath, "/capacity");
 
     // exit if file doesn't exist
-    if (access(capacity_path, F_OK ) == -1) {
+    if (access(cappath, F_OK ) == -1) {
         set_error(block, "CAPACITY FILE ERROR");
         return false;
     }
 
-    FILE *fp;
-
-    char buffer[100] = {'\0'};
-
-    fp = fopen(capacity_path, "r");
+    fp = fopen(cappath, "r");
     if (fp == NULL) {
         set_error(block, "CAPACITY READ ERROR");
     }
     else {
-        fgets(buffer, 4, (FILE*)fp);
+        fgets(buf, 4, (FILE*)fp);
     }
     // remove trailing newlines
-    strtok(buffer, "\n");
+    strtok(buf, "\n");
 
-    char* color = (atoi(buffer) > block->treshold) ? CS_OK : CS_SELECTED;
+    col = (atoi(buf) > block->treshold) ? CS_OK : CS_SELECTED;
 
-    get_graph(block, block->maxlen, atoi(buffer), color);
+    get_graph(block, block->maxlen, atoi(buf), col);
 
     fclose(fp);
     return is_changed(block);
 }
 
-bool get_sites(block_t* block) {
+bool get_sites(Block *block) {
+    // get lenght of sites array
+    uint8_t slen = sizeof(sites)/sizeof(sites[0]);
+    char buf[50] = {'\0'};
+    uint8_t i;
+
     if (!block->enabled) {
         strcpy(block->text, "");
         return false;
@@ -212,42 +202,35 @@ bool get_sites(block_t* block) {
     if (! is_elapsed(block))
         return false;
 
-    // get lenght of sites array
-    uint8_t sites_len = sizeof(sites_arr)/sizeof(sites_arr[0]);
-
-    char buffer[50] = {'\0'};
-
-    for (uint8_t i=0 ; i<sites_len ; i++) {
-        site_t site = sites_arr[i];
-
-        long response_code;
-        long* ptr = &response_code;
+    for (i=0 ; i<slen ; i++) {
+        Site site = sites[i];
+        long rescode;
+        long* ptr = &rescode;
+        char col[strlen(CS_NORMAL+1)];
 
         uint8_t res = do_request(site.url, ptr);
-
-        char color[strlen(CS_NORMAL+1)];
         
-        if (res == CURLE_OK && site.res_code == response_code)
-            strcpy(color, CS_OK);
+        if (res == CURLE_OK && site.res_code == rescode)
+            strcpy(col, CS_OK);
         else if (res == CURLE_OPERATION_TIMEDOUT)
-            strcpy(color, CS_SELECTED);
+            strcpy(col, CS_SELECTED);
         else
-            strcpy(color, CS_ERROR);
+            strcpy(col, CS_ERROR);
 
-        strcat(buffer, color);
-        strcat(buffer, site.id);
+        strcat(buf, col);
+        strcat(buf, site.id);
 
-        if (i < sites_len-1) {
-            strcat(buffer, CS_NORMAL);
-            strcat(buffer, ":");
+        if (i < slen-1) {
+            strcat(buf, CS_NORMAL);
+            strcat(buf, ":");
         }
     }
 
-    strcpy(block->text, buffer);
+    strcpy(block->text, buf);
     return is_changed(block);
 }
         
-bool get_wireless(block_t* block) {
+bool get_wireless(Block *block) {
     if (!block->enabled) {
         strcpy(block->text, "");
         return false;
@@ -309,7 +292,7 @@ bool get_wireless(block_t* block) {
     return is_changed(block);
 }
 
-bool get_mpd(block_t *block) {
+bool get_mpd(Block *block) {
     if (!block->enabled) {
         strcpy(block->text, "");
         return false;

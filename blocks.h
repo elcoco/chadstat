@@ -20,13 +20,13 @@
 #include "utils.h"
 
 
-typedef struct block_t {
+typedef struct Block {
     char     name[20];
     bool     enabled;
     int8_t   timeout;
 
     // function pointer to get_<block>
-    bool     (*get)(struct block_t *block_t);
+    bool     (*get)(struct Block *Block);
 
     int8_t   treshold;
     int8_t   maxlen;
@@ -34,29 +34,29 @@ typedef struct block_t {
     uint32_t t_last;
     char     text[50];
     char     text_prev[50];
-} block_t;
+} Block;
 
 typedef struct {
     const char* url;
     const char* id;
     long res_code;       // expected response code
-} site_t;
+} Site;
 
 
-bool is_changed(block_t* block);
-bool is_elapsed(block_t* block);
+bool is_changed(Block *block);
+bool is_elapsed(Block *block);
 
-void set_error(block_t* block, char* msg);
+void set_error(Block *block, char* msg);
 
-void get_graph(block_t* block, uint8_t graph_len, uint8_t percent, char* color);
-void get_strgraph(block_t* block, char* str, uint8_t percent, char* color);
+void get_graph(Block *block, uint8_t len, uint8_t perc, char* col);
+void get_strgraph(Block *block, char* str, uint8_t perc, char* col);
 
-bool get_datetime(block_t* block);
-bool get_volume(block_t* block);
-bool get_battery(block_t* block);
-bool get_sites(block_t* block);
-bool get_wireless(block_t* block);
-bool get_mpd(block_t *block);
+bool get_datetime(Block *block);
+bool get_volume(Block *block);
+bool get_battery(Block *block);
+bool get_sites(Block *block);
+bool get_wireless(Block *block);
+bool get_mpd(Block *block);
 
 // allow config.h to access above functions
 #include "config.h"

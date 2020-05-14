@@ -16,7 +16,7 @@
 
 
 // check these sites and their respective status codes.
-static site_t sites_arr[] = {
+static Site sites[] = {
 //   URL                                ID      EXPECTED STATUS CODE
     {"https://monutor.com",             "MO",   200},
     {"https://api.monutor.com",         "API",  404},
@@ -25,7 +25,7 @@ static site_t sites_arr[] = {
     {"https://nc.chmod777.org",         "NC",   200}
 };
 
-static block_t block_arr[] = {
+static Block blocks[] = {
 //    NAME        ENABLED TIMEOUT  FUNC      TRESHOLD  MAXLEN  SEPARATOR
     { "mpd",      true,        5,  get_mpd,       -1,      40,     " "},
     { "http",     true,       30,  get_sites,     -1,      -1,     " "},

@@ -36,10 +36,11 @@ static void xsetroot(const char *name){
 static uint8_t get_timeout() {
     /* get the smallest timeout value defined in the blocks array */
     uint8_t timeout = 60;
-    uint8_t l = sizeof(block_arr)/sizeof(block_arr[0]);
+    uint8_t bl = sizeof(blocks)/sizeof(blocks[0]);
+    uint8_t i;
 
-    for (uint8_t i=0 ; i<l ; i++) {
-        block_t block = block_arr[i];
+    for (i=0 ; i<bl ; i++) {
+        Block block = blocks[i];
         if (block.timeout < timeout)
             timeout = block.timeout;
     }
@@ -73,26 +74,27 @@ static void parse_args(int *argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
+    bool is_changed;
+    uint8_t bl;
+    uint8_t i;
+
     parse_args(&argc, argv);
 
-    // reset
-    xsetroot("");
-
     while (1) {
-        bool is_changed = false;
-        uint8_t l = sizeof(block_arr)/sizeof(block_arr[0]);
+        is_changed = false;
+        bl = sizeof(blocks)/sizeof(blocks[0]);
 
         // update all the statusses and check if they've changed
-        for (uint8_t i=0 ; i<l ; i++) {
-            if (block_arr[i].get(&block_arr[i]))
+        for (i=0 ; i<bl ; i++) {
+            if (blocks[i].get(&blocks[i]))
                 is_changed = true;
         }
 
         if (is_changed) {
             char status[MAXSTRING+1] = {'\0'};
 
-            for (uint8_t i=0 ; i<l ; i++) {
-                block_t block = block_arr[i];
+            for (i=0 ; i<bl ; i++) {
+                Block block = blocks[i];
 
                 strcat(status, block.text);
                 strcat(status, block.sep_chr);
