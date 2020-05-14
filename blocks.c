@@ -357,6 +357,7 @@ bool get_mpd(Block *block) {
     }
     mpd_connection_free(conn);
 
+    strcat(block->text, block->sep_chr);
     return is_changed(block);
 }
 
@@ -393,30 +394,28 @@ bool get_maildirs(Block *block) {
         fc = 0;
         while ((de = readdir(dr)) != NULL) {
 
-            if (strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0) {
+            // count files in maildir
+            if (strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0)
                 fc++;
-            }
         }
 
-        col = (fc > 0) ? CS_OK : CS_NORMAL;
+        // only show if there is mail
+        if (fc > 0) {
+            sprintf(fcbuf, "%d", fc);
 
-        sprintf(fcbuf, "%d", fc);
+            strcat(buf, CS_OK);
+            strcat(buf, md->id);
+            strcat(buf, CS_NORMAL);
+            strcat(buf, fcbuf);
 
-        strcat(buf, col);
-        strcat(buf, md->id);
-        strcat(buf, CS_NORMAL);
-        strcat(buf, fcbuf);
-
-        if (i < mdlen-1)
-            strcat(buf, ":");
+            if (i < mdlen-1)
+                strcat(buf, ":");
+        }
 
         md++;
-
         closedir(dr);
     }
 
-
-    printf("%s\n", buf);
     strcpy(block->text, buf);
     return is_changed(block);
 }

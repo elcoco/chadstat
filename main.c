@@ -75,17 +75,18 @@ static void parse_args(int *argc, char **argv) {
 
 int main(int argc, char **argv) {
     bool is_changed;
-    uint8_t bl;
+    uint8_t blen;
     uint8_t i;
 
     parse_args(&argc, argv);
+    xsetroot("");   // reset
 
     while (1) {
         is_changed = false;
-        bl = sizeof(blocks)/sizeof(blocks[0]);
+        blen = sizeof(blocks)/sizeof(blocks[0]);
 
         // update all the statusses and check if they've changed
-        for (i=0 ; i<bl ; i++) {
+        for (i=0 ; i<blen ; i++) {
             if (blocks[i].get(&blocks[i]))
                 is_changed = true;
         }
@@ -93,12 +94,14 @@ int main(int argc, char **argv) {
         if (is_changed) {
             char status[MAXSTRING+1] = {'\0'};
 
-            for (i=0 ; i<bl ; i++) {
+            for (i=0 ; i<blen ; i++) {
                 Block block = blocks[i];
 
-                strcat(status, block.text);
-                strcat(status, block.sep_chr);
-
+                // don't show block if it is empty
+                if (strlen(block.text) > 0) {
+                    strcat(status, block.text);
+                    strcat(status, block.sep_chr);
+                }
             }
             strcat(status, "         ");
 

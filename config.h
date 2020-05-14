@@ -28,7 +28,9 @@ static Site sites[] = {
 
 // check these sites and their respective status codes.
 static Maildir maildirs[] = {
-//   PATH                                                               ID
+//   PATH                                                                   ID
+    {"/home/eco/.local/share/mail/eelcokater@gmail.com/Inbox/new",          "GE"},
+    {"/home/eco/.local/share/mail/flevosap@gmail.com/Inbox/new",            "GF"},
     {"/home/eco/.local/share/mail/eelcokater@protonmail.com/Inbox/new",     "PE"},
     {"/home/eco/.local/share/mail/spambaconspam@protonmail.com/Inbox/new",  "PS"}
 };
@@ -39,7 +41,7 @@ static Block blocks[] = {
     { "http",     true,       30,  get_sites,     -1,      -1,     " "},
     { "battery",  true,       30,  get_battery,   10,      10,     " "},
     { "volume",   true,        3,  get_volume,    -1,      10,     " "},
-    { "maildirs", true,        1,  get_maildirs,  -1,      40,     " "},
+    { "maildirs", true,       30,  get_maildirs,  -1,      40,     " "},
     { "wireless", true,        3,  get_wireless,  60,      -1,     "  "},
     { "datetime", true,        5,  get_datetime,  -1,      -1,     " "}
 };
