@@ -218,7 +218,7 @@ bool get_sites(block_t* block) {
     // get lenght of sites array
     uint8_t sites_len = sizeof(sites_arr)/sizeof(sites_arr[0]);
 
-    char buffer[50];
+    char buffer[50] = {'\0'};
 
     for (uint8_t i=0 ; i<sites_len ; i++) {
         site_t site = sites_arr[i];
@@ -228,7 +228,7 @@ bool get_sites(block_t* block) {
 
         uint8_t res = do_request(site.url, ptr);
 
-        char color[5];
+        char color[strlen(CS_NORMAL+1)];
         
         if (res == CURLE_OK && site.res_code == response_code)
             strcpy(color, CS_OK);
@@ -274,10 +274,8 @@ bool get_wireless(block_t* block) {
     }
 
     int sockfd;
-    //char * id;
-    //id = char[IW_ESSID_MAX_SIZE+1];
 
-    char id[IW_ESSID_MAX_SIZE+1];
+    char id[IW_ESSID_MAX_SIZE+1] = {'\0'};
 
     struct iwreq wreq;
     memset(&wreq, 0, sizeof(struct iwreq));

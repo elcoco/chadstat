@@ -90,8 +90,11 @@ int main(int argc, char **argv) {
             char status[MAXSTRING+1] = {'\0'};
 
             for (uint8_t i=0 ; i<l ; i++) {
-                strcat(status, block_arr[i].text);
-                strcat(status, " ");
+                block_t block = block_arr[i];
+
+                strcat(status, block.text);
+                strcat(status, block.sep_chr);
+
             }
             strcat(status, "         ");
 
