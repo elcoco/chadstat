@@ -1,2 +1,3 @@
 *.o
 dface
+config.h
