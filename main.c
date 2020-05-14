@@ -76,12 +76,12 @@ int main(int argc, char **argv) {
     // reset
     xsetroot("");
 
-
     while (1) {
         bool is_changed = false;
-        uint8_t length = sizeof(block_arr)/sizeof(block_arr[0]);
+        uint8_t l = sizeof(block_arr)/sizeof(block_arr[0]);
 
-        for (uint8_t i=0 ; i<length ; i++) {
+        // update all the statusses and check if they've changed
+        for (uint8_t i=0 ; i<l ; i++) {
             if (block_arr[i].get(&block_arr[i]))
                 is_changed = true;
         }
@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
         if (is_changed) {
             char status[MAXSTRING+1] = {'\0'};
 
-            for (uint8_t i=0 ; i<length ; i++) {
+            for (uint8_t i=0 ; i<l ; i++) {
                 strcat(status, block_arr[i].text);
                 strcat(status, " ");
             }

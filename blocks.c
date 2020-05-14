@@ -1,13 +1,6 @@
 #include "blocks.h"
 
 
-bool disko(uint8_t bla) {
-    printf("bla\n");
-}
-bool disko2(uint8_t bla) {
-    printf("bever\n");
-}
-
 bool is_elapsed(block_t* block) {
     // check if time has elapsed, reset time of so
     uint32_t t_cur = time(NULL);
@@ -143,7 +136,7 @@ bool get_volume(block_t* block) {
     snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &level);
 
     volume = ((float)level/(float)max)*100.00;
-    get_graph(block, block->graphlen, volume, CS_SELECTED);
+    get_graph(block, block->maxlen, volume, CS_SELECTED);
     snd_mixer_close(handle);
     return is_changed(block);
 }
@@ -207,7 +200,7 @@ bool get_battery(block_t* block) {
 
     char* color = (atoi(buffer) > block->treshold) ? CS_OK : CS_SELECTED;
 
-    get_graph(block, block->graphlen, atoi(buffer), color);
+    get_graph(block, block->maxlen, atoi(buffer), color);
 
     fclose(fp);
     return is_changed(block);
@@ -381,7 +374,7 @@ bool get_mpd(block_t *block) {
         title = mpd_song_get_tag(song, MPD_TAG_TITLE, 0);
         track = mpd_song_get_tag(song, MPD_TAG_TRACK, 0);
 
-        sprintf(block->text, "%s%s - [%s] %s", CS_NORMAL, artist, track, title);
+        snprintf(block->text, block->maxlen, "%s%s - [%s] %s", CS_NORMAL, artist, track, title);
         mpd_song_free(song);
     }
     mpd_connection_free(conn);
