@@ -63,9 +63,6 @@ void get_strgraph(block_t* block, char* str, uint8_t percent, char* color) {
     uint8_t graph_len = strlen(str);
     int8_t level = (percent / 100.0) * graph_len;
 
-    //char l_text[graph_len+1] = {'\0'};
-    //char r_text[graph_len+1] = {'\0'};
-
     char l_text[50] = {'\0'};
     char r_text[50] = {'\0'};
 
