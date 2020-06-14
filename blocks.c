@@ -26,6 +26,27 @@ void set_error(Block *block, char* msg) {
     sprintf(block->text, "%s%s", CS_ERROR, msg);
 }
 
+void set_text(Block *block, char *text, char *color, bool separator) {
+    char buf[256] = {'\0'};
+    i3ify(buf, text, color, separator);
+    sprintf(block->text, "%s,\n", buf);
+}
+
+void add_text(Block *block, char *text, char *color, bool separator) {
+    // append text to block
+    char buf[1024] = {'\0'};
+    i3ify(buf, text, color, separator);
+    sprintf(block->text, "%s%s,\n", block->text, buf);
+}
+
+void set_text2(Block *block, char *text, char *color, char *text2, char *color2) {
+    char buf1[256] = {'\0'};
+    char buf2[256] = {'\0'};
+    i3ify(buf1, text, color, false);
+    i3ify(buf2, text2, color2, true);
+    sprintf(block->text, "%s,\n%s,\n", buf1, buf2);
+}
+
 void get_graph(Block *block, uint8_t len, uint8_t perc, char* col) {
     char graph_chr1 = '|';
     char graph_chr2 = '|';
@@ -45,7 +66,8 @@ void get_graph(Block *block, uint8_t len, uint8_t perc, char* col) {
     for (i=0 ; i<len-level ; i++) {
         r_text[i] = graph_chr2;
     }
-    sprintf(block->text, "%s%s%s%s", col, l_text, CS_NORMAL, r_text);
+    //sprintf(block->text, "%s%s%s%s", col, l_text, CS_NORMAL, r_text);
+    set_text2(block, l_text, col, r_text, CS_NORMAL);
 }
 
 void get_strgraph(Block *block, char* str, uint8_t perc, char* col) {
@@ -68,7 +90,8 @@ void get_strgraph(Block *block, char* str, uint8_t perc, char* col) {
         r_text[i] = str[index];
         index++;
     }
-    sprintf(block->text, "%s%s%s%s", col, l_text, CS_NORMAL, r_text);
+    //sprintf(block->text, "%s%s%s%s", col, l_text, CS_NORMAL, r_text);
+    set_text2(block, l_text, col, r_text, CS_NORMAL);
 }
 
 bool get_datetime(Block *block) {
@@ -85,7 +108,8 @@ bool get_datetime(Block *block) {
         return false;
 
     strftime(buf, 100, DATETIME_FMT, &tm);
-    sprintf(block->text, "%s%s", CS_NORMAL, buf);
+    //sprintf(block->text, "%s%s", CS_NORMAL, buf);
+    set_text(block, buf, CS_NORMAL, true);
     return is_changed(block);
 }
 
@@ -193,6 +217,7 @@ bool get_sites(Block *block) {
     uint8_t slen = sizeof(sites)/sizeof(sites[0]);
     char buf[50] = {'\0'};
     uint8_t i;
+    char siteid[20] = {'\0'};
 
     if (!block->enabled) {
         strcpy(block->text, "");
@@ -201,6 +226,9 @@ bool get_sites(Block *block) {
 
     if (! is_elapsed(block))
         return false;
+
+    // clear
+    block->text[0] = '\0';
 
     for (i=0 ; i<slen ; i++) {
         Site site = sites[i];
@@ -217,16 +245,16 @@ bool get_sites(Block *block) {
         else
             strcpy(col, CS_ERROR);
 
-        strcat(buf, col);
-        strcat(buf, site.id);
+        sprintf(siteid, "%s", site.id);
 
         if (i < slen-1) {
-            strcat(buf, CS_NORMAL);
-            strcat(buf, ":");
+            add_text(block, siteid, col, false);
+            add_text(block, ":", CS_NORMAL, false);
         }
+        else
+            add_text(block, siteid, col, true);
     }
 
-    strcpy(block->text, buf);
     return is_changed(block);
 }
         
@@ -313,7 +341,7 @@ bool get_mpd(Block *block) {
 
 	if (mpd_connection_get_error(conn) != MPD_ERROR_SUCCESS) {
         mpd_connection_free(conn);
-        strcpy(block->text, "MPD CONNECTION ERROR");
+        set_error(block, "MPD CONNECTION ERROR");
         return is_changed(block);
 	}
 
@@ -325,12 +353,12 @@ bool get_mpd(Block *block) {
     status = mpd_recv_status(conn);
     if (status == NULL) {
         mpd_connection_free(conn);
-        strcpy(block->text, "MPD CONNECTION ERROR");
+        set_error(block, "MPD CONNECTION ERROR");
         return is_changed(block);
     }
 
     if ( mpd_status_get_state(status) < MPD_STATE_PLAY) {
-        strcpy(block->text, "STOPPED");
+        set_text(block, "STOPPED", CS_NORMAL, true);
         mpd_connection_free(conn);
         return is_changed(block);
     }
@@ -339,7 +367,7 @@ bool get_mpd(Block *block) {
 
     if (mpd_connection_get_error(conn) != MPD_ERROR_SUCCESS) {
         mpd_connection_free(conn);
-        strcpy(block->text, "MPD CONNECTION ERROR");
+        set_error(block, "MPD CONNECTION ERROR");
         return is_changed(block);
     }
 
@@ -351,22 +379,26 @@ bool get_mpd(Block *block) {
         track = mpd_song_get_tag(song, MPD_TAG_TRACK, 0);
         strcpy(col, (mpd_status_get_state(status) == MPD_STATE_PLAY) ? CS_OK : CS_NORMAL);
 
+        char buf[256] = {'\0'};
+
         if (artist == NULL && track == NULL)
-            snprintf(block->text, block->maxlen, "%s%s", col, title);
+            snprintf(buf, block->maxlen, "%s", title);
         else
-            snprintf(block->text, block->maxlen, "%s%s - [%s] %s", col, artist, track, title);
+            snprintf(buf, block->maxlen, "%s - [%s] %s", artist, track, title);
+
+        set_text(block, buf, col, true);
 
         mpd_song_free(song);
     }
     mpd_connection_free(conn);
 
-    strcat(block->text, block->sep_chr);
+    //strcat(block->text, block->sep_chr);
     return is_changed(block);
 }
 
 bool get_maildirs(Block *block) {
     struct dirent *de;  // Pointer for directory entry 
-    char buf[100] = {'\0'};
+    char buf[1024] = {'\0'};
     DIR *dr;
     uint8_t mdlen = sizeof(maildirs)/sizeof(maildirs[0]);
     uint32_t fc;
@@ -374,6 +406,7 @@ bool get_maildirs(Block *block) {
     Maildir *md;
     char *col;
     char fcbuf[10];
+    char mdbuf[10];
 
     if (!block->enabled) {
         strcpy(block->text, "");
@@ -384,6 +417,9 @@ bool get_maildirs(Block *block) {
         return false;
 
     md = &maildirs[0];
+
+    // clear
+    block->text[0] = '\0';
 
     for (i=0 ; i<mdlen ; i++) {
         dr = opendir(md->path);
@@ -405,20 +441,22 @@ bool get_maildirs(Block *block) {
         // only show if there is mail
         if (fc > 0) {
             sprintf(fcbuf, "%d", fc);
+            sprintf(mdbuf, "%s", md->id);
 
-            strcat(buf, CS_OK);
-            strcat(buf, md->id);
-            strcat(buf, CS_NORMAL);
-            strcat(buf, fcbuf);
+            add_text(block, mdbuf, CS_OK, false);
 
-            if (i < mdlen-1)
-                strcat(buf, ":");
+            if (i < mdlen-1) {
+                add_text(block, fcbuf, CS_NORMAL, false);
+                add_text(block, ":", CS_NORMAL, false);
+            }
+            else
+                add_text(block, fcbuf, CS_NORMAL, true);
+                
         }
 
         md++;
         closedir(dr);
     }
 
-    strcpy(block->text, buf);
     return is_changed(block);
 }

@@ -19,19 +19,6 @@ static void usage() {
     exit(0);
 }
 
-static void xsetroot(const char *name){
-        Display *dpy;
-
-        if (( dpy = XOpenDisplay(0x0)) == NULL )
-            die("Can't open display!\n");
-
-        XStoreName(dpy, DefaultRootWindow(dpy), name);
-        XSync(dpy, 0);
-        //XFlush(dpy);
-
-        XCloseDisplay(dpy);
-}
-
 static uint8_t get_timeout() {
     /* get the smallest timeout value defined in the blocks array */
     uint8_t timeout = 60;
@@ -72,13 +59,17 @@ static void parse_args(int *argc, char **argv) {
     } 
 }
 
+void print_header() {
+    printf("{ \"version\": 1 } \n[\n[],\n");
+}
+
 int main(int argc, char **argv) {
     bool is_changed;
     uint8_t blen;
     uint8_t i;
 
     parse_args(&argc, argv);
-    xsetroot("");   // reset
+    print_header();
 
     while (1) {
         is_changed = false;
@@ -91,21 +82,25 @@ int main(int argc, char **argv) {
         }
 
         if (is_changed) {
-            char status[MAXSTRING+1] = {'\0'};
+            //char status[MAXSTRING+1] = {'\0'};
 
+            printf("[\n");
             for (i=0 ; i<blen ; i++) {
                 Block block = blocks[i];
 
                 // don't show block if it is empty
                 if (strlen(block.text) > 0) {
-                    strcat(status, block.text);
-                    strcat(status, block.sep_chr);
+
+                    // strip last comma + newline
+                    if ( i == blen-1)
+                        block.text[strlen(block.text)-2] = '\0';
+
+                    printf("%s",block.text);
                 }
             }
-            strcat(status, "         ");
 
-            xsetroot(status);
-            printf("%s\n", status);
+            printf("\n],\n");
+            fflush(stdout);
         }
 
         sleep(get_timeout());

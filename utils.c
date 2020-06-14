@@ -107,3 +107,8 @@ int8_t get_signal_strength(char* interface) {
     // convert to integer
     return atoi(tok);
 }
+
+void i3ify(char *buf, char *text, char *color, bool separator) {
+    uint8_t sep = separator ? 20 : 0;
+    sprintf(buf, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": %d}", text, color, sep);
+}
