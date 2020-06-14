@@ -51,6 +51,8 @@ bool is_changed(Block *block);
 bool is_elapsed(Block *block);
 
 void set_error(Block *block, char* msg);
+void set_text(Block *block, char *text, char *color, bool separator);
+void set_text2(Block *block, char *text, char *color, char *text2, char *color2);
 
 void get_graph(Block *block, uint8_t len, uint8_t perc, char* col);
 void get_strgraph(Block *block, char* str, uint8_t perc, char* col);

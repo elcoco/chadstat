@@ -23,7 +23,7 @@ bool is_changed(Block *block) {
 }
 
 void set_error(Block *block, char* msg) {
-    sprintf(block->text, "%s%s", CS_ERROR, msg);
+    set_text(block, msg, CS_ERROR, true);
 }
 
 void set_text(Block *block, char *text, char *color, bool separator) {
@@ -143,7 +143,7 @@ bool get_volume(Block *block) {
     snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &level);
 
     volume = ((float)level/(float)max)*100.00;
-    get_graph(block, block->maxlen, volume, CS_SELECTED);
+    get_graph(block, block->maxlen, volume, CS_WARNING);
     snd_mixer_close(handle);
     return is_changed(block);
 }
@@ -204,7 +204,7 @@ bool get_battery(Block *block) {
     // remove trailing newlines
     strtok(buf, "\n");
 
-    col = (atoi(buf) > block->treshold) ? CS_OK : CS_SELECTED;
+    col = (atoi(buf) > block->treshold) ? CS_OK : CS_WARNING;
 
     get_graph(block, block->maxlen, atoi(buf), col);
 
@@ -241,7 +241,7 @@ bool get_sites(Block *block) {
         if (res == CURLE_OK && site.res_code == rescode)
             strcpy(col, CS_OK);
         else if (res == CURLE_OPERATION_TIMEDOUT)
-            strcpy(col, CS_SELECTED);
+            strcpy(col, CS_WARNING);
         else
             strcpy(col, CS_ERROR);
 
@@ -309,7 +309,7 @@ bool get_wireless(Block *block) {
             if (signal > block->treshold)
                 get_strgraph(block, (char *)wreq.u.essid.pointer, signal, CS_OK);
             else
-                get_strgraph(block, (char *)wreq.u.essid.pointer, signal, CS_SELECTED);
+                get_strgraph(block, (char *)wreq.u.essid.pointer, signal, CS_WARNING);
         }
         else {
             set_error(block, "DISCONNECTED");
