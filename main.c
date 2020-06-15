@@ -67,6 +67,7 @@ int main(int argc, char **argv) {
     bool is_changed;
     uint8_t blen;
     uint8_t i;
+    char chopbuf[1024];
     Block *block;
 
     parse_args(&argc, argv);
@@ -95,10 +96,14 @@ int main(int argc, char **argv) {
                 if (strlen(block->text) > 0) {
 
                     // strip last comma + newline
-                    if ( i == blen-1)
-                        block->text[strlen(block->text)-2] = '\0';
-
-                    printf("%s",block->text);
+                    if ( i == blen-1) {
+                        chopbuf[0] = '\0';
+                        strcpy(chopbuf, block->text);
+                        chopbuf[strlen(chopbuf)-2] = '\0';
+                        printf("%s",chopbuf);
+                    }
+                    else
+                        printf("%s",block->text);
                 }
             }
 

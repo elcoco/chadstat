@@ -32,8 +32,8 @@ typedef struct Block {
     int8_t   maxlen;
     char     sep_chr[10];
     uint32_t t_last;
-    char     text[1024];
-    char     text_prev[1024];
+    char     text[2048];
+    char     text_prev[2048];
 } Block;
 
 typedef struct {

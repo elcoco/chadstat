@@ -30,8 +30,10 @@ void set_error(Block *block, char* msg) {
 
 void set_text(Block *block, char *text, char *color, bool separator) {
     char buf[256] = {'\0'};
-    i3ify(buf, text, color);
-    sprintf(block->text, "%s,\n", buf);
+    if (strlen(text) > 0) {
+        i3ify(buf, text, color);
+        sprintf(block->text, "%s,\n", buf);
+    }
 
     if (separator) {
         add_text(block, block->sep_chr, CS_NORMAL, false);
@@ -41,9 +43,10 @@ void set_text(Block *block, char *text, char *color, bool separator) {
 void add_text(Block *block, char *text, char *color, bool separator) {
     // append text to block
     char buf[1024] = {'\0'};
-    i3ify(buf, text, color);
-
-    sprintf(block->text, "%s%s,\n", block->text, buf);
+    if (strlen(text) > 0) {
+        i3ify(buf, text, color);
+        sprintf(block->text, "%s%s,\n", block->text, buf);
+    }
 
     if (separator) {
         add_text(block, block->sep_chr, CS_NORMAL, false);
@@ -115,7 +118,6 @@ bool get_datetime(Block *block) {
         return false;
 
     strftime(buf, 100, DATETIME_FMT, &tm);
-    //sprintf(block->text, "%s%s", CS_NORMAL, buf);
     set_text(block, buf, CS_NORMAL, true);
     return is_changed(block);
 }
@@ -449,7 +451,6 @@ bool get_maildirs(Block *block) {
             set_error(block, "MAILDIR ERROR");
             closedir(dr);
             return false;
-            //continue;
         }
 
         fc = 0;
@@ -482,7 +483,7 @@ bool get_maildirs(Block *block) {
 
     // display block separator if there is new mail
     if (newmail)
-        add_text(block, "", CS_NORMAL, true);
+        add_text(block, block->sep_chr, CS_NORMAL, false);
 
     return is_changed(block);
 }
