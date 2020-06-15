@@ -30,7 +30,7 @@ typedef struct Block {
 
     int8_t   treshold;
     int8_t   maxlen;
-    char     sep_chr[5];
+    char     sep_chr[10];
     uint32_t t_last;
     char     text[1024];
     char     text_prev[1024];
@@ -52,6 +52,7 @@ bool is_elapsed(Block *block);
 
 void set_error(Block *block, char* msg);
 void set_text(Block *block, char *text, char *color, bool separator);
+void add_text(Block *block, char *text, char *color, bool separator);
 
 void get_graph(Block *block, uint8_t len, uint8_t perc, char* col);
 void get_strgraph(Block *block, char* str, uint8_t perc, char* col);

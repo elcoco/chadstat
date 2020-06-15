@@ -67,6 +67,7 @@ int main(int argc, char **argv) {
     bool is_changed;
     uint8_t blen;
     uint8_t i;
+    Block *block;
 
     parse_args(&argc, argv);
     print_header();
@@ -75,33 +76,36 @@ int main(int argc, char **argv) {
         is_changed = false;
         blen = sizeof(blocks)/sizeof(blocks[0]);
 
+
         // update all the statusses and check if they've changed
-        for (i=0 ; i<blen ; i++) {
-            if (blocks[i].get(&blocks[i]))
+        block = blocks;
+        for (i=0 ; i<blen ; i++, block++) {
+
+            if (block->get(block))
                 is_changed = true;
         }
 
         if (is_changed) {
-            //char status[MAXSTRING+1] = {'\0'};
-
             printf("[\n");
-            for (i=0 ; i<blen ; i++) {
-                Block block = blocks[i];
+
+            block = blocks;
+            for (i=0 ; i<blen ; i++, block++) {
 
                 // don't show block if it is empty
-                if (strlen(block.text) > 0) {
+                if (strlen(block->text) > 0) {
 
                     // strip last comma + newline
                     if ( i == blen-1)
-                        block.text[strlen(block.text)-2] = '\0';
+                        block->text[strlen(block->text)-2] = '\0';
 
-                    printf("%s",block.text);
+                    printf("%s",block->text);
                 }
             }
 
             printf("\n],\n");
             fflush(stdout);
         }
+
 
         sleep(get_timeout());
     }

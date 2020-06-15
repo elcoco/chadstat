@@ -1,5 +1,7 @@
 #include "blocks.h"
 
+/* Helper functions *///////////////////////////////////////////////////////////
+
 bool is_elapsed(Block *block) {
     // check if time has elapsed, reset time of so
     uint32_t t_cur = time(NULL);
@@ -28,15 +30,24 @@ void set_error(Block *block, char* msg) {
 
 void set_text(Block *block, char *text, char *color, bool separator) {
     char buf[256] = {'\0'};
-    i3ify(buf, text, color, separator);
+    i3ify(buf, text, color);
     sprintf(block->text, "%s,\n", buf);
+
+    if (separator) {
+        add_text(block, block->sep_chr, CS_NORMAL, false);
+    }
 }
 
 void add_text(Block *block, char *text, char *color, bool separator) {
     // append text to block
     char buf[1024] = {'\0'};
-    i3ify(buf, text, color, separator);
+    i3ify(buf, text, color);
+
     sprintf(block->text, "%s%s,\n", block->text, buf);
+
+    if (separator) {
+        add_text(block, block->sep_chr, CS_NORMAL, false);
+    }
 }
 
 void get_graph(Block *block, uint8_t len, uint8_t perc, char* col) {
@@ -87,6 +98,8 @@ void get_strgraph(Block *block, char* str, uint8_t perc, char* col) {
     add_text(block, l_text, col, false);
     add_text(block, r_text, CS_NORMAL, true);
 }
+
+/* Blocks */////////////////////////////////////////////////////////////////////
 
 bool get_datetime(Block *block) {
     time_t t = time(NULL);            // 32bit integer representing time
