@@ -415,6 +415,7 @@ bool get_maildirs(Block *block) {
     char fcbuf[10];
     char mdbuf[10];
     const char *pptr;
+    bool newmail = false;
 
     if (!block->enabled) {
         strcpy(block->text, "");
@@ -459,25 +460,28 @@ bool get_maildirs(Block *block) {
         }
 
         // only show if there is mail
-        // TODO this doesn't work because there is no way to know if the current mailbox is the last mailbox
         if (fc > 0) {
+
+            // show separator if not the first
+            if (newmail)
+                add_text(block, MAILDIR_SEP_CHR, CS_NORMAL, false);
+
             sprintf(fcbuf, "%d", fc);
             sprintf(mdbuf, "%s", md->id);
 
             add_text(block, mdbuf, CS_OK, false);
+            add_text(block, fcbuf, CS_NORMAL, false);
 
-            if (i < mdlen-1) {
-                add_text(block, fcbuf, CS_NORMAL, false);
-                add_text(block, MAILDIR_SEP_CHR, CS_NORMAL, false);
-            }
-            else
-                add_text(block, fcbuf, CS_NORMAL, true);
-                
+            // set flag
+            newmail = true;
         }
-
         md++;
         closedir(dr);
     }
+
+    // display block separator if there is new mail
+    if (newmail)
+        add_text(block, "", CS_NORMAL, true);
 
     return is_changed(block);
 }
