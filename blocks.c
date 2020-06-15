@@ -39,14 +39,6 @@ void add_text(Block *block, char *text, char *color, bool separator) {
     sprintf(block->text, "%s%s,\n", block->text, buf);
 }
 
-void set_text2(Block *block, char *text, char *color, char *text2, char *color2) {
-    char buf1[256] = {'\0'};
-    char buf2[256] = {'\0'};
-    i3ify(buf1, text, color, false);
-    i3ify(buf2, text2, color2, true);
-    sprintf(block->text, "%s,\n%s,\n", buf1, buf2);
-}
-
 void get_graph(Block *block, uint8_t len, uint8_t perc, char* col) {
     char graph_chr1 = '|';
     char graph_chr2 = '|';
@@ -66,8 +58,9 @@ void get_graph(Block *block, uint8_t len, uint8_t perc, char* col) {
     for (i=0 ; i<len-level ; i++) {
         r_text[i] = graph_chr2;
     }
-    //sprintf(block->text, "%s%s%s%s", col, l_text, CS_NORMAL, r_text);
-    set_text2(block, l_text, col, r_text, CS_NORMAL);
+    block->text[0] = '\0';
+    add_text(block, l_text, col, false);
+    add_text(block, r_text, CS_NORMAL, true);
 }
 
 void get_strgraph(Block *block, char* str, uint8_t perc, char* col) {
@@ -90,8 +83,9 @@ void get_strgraph(Block *block, char* str, uint8_t perc, char* col) {
         r_text[i] = str[index];
         index++;
     }
-    //sprintf(block->text, "%s%s%s%s", col, l_text, CS_NORMAL, r_text);
-    set_text2(block, l_text, col, r_text, CS_NORMAL);
+    block->text[0] = '\0';
+    add_text(block, l_text, col, false);
+    add_text(block, r_text, CS_NORMAL, true);
 }
 
 bool get_datetime(Block *block) {
@@ -249,7 +243,7 @@ bool get_sites(Block *block) {
 
         if (i < slen-1) {
             add_text(block, siteid, col, false);
-            add_text(block, ":", CS_NORMAL, false);
+            add_text(block, HTTP_SEP_CHR, CS_NORMAL, false);
         }
         else
             add_text(block, siteid, col, true);
@@ -407,6 +401,7 @@ bool get_maildirs(Block *block) {
     char *col;
     char fcbuf[10];
     char mdbuf[10];
+    const char *pptr;
 
     if (!block->enabled) {
         strcpy(block->text, "");
@@ -422,7 +417,19 @@ bool get_maildirs(Block *block) {
     block->text[0] = '\0';
 
     for (i=0 ; i<mdlen ; i++) {
-        dr = opendir(md->path);
+        char path[100] = {'\0'};
+
+        // expand ~ to homedir
+        if (*md->path == '~') {
+            pptr = md->path;        // remove ~
+            pptr++;
+            strcat(path, getenv("HOME"));  // add homedir
+            strcat(path, pptr);
+        }
+        else
+            strcpy(path, md->path);
+
+        dr = opendir(path);
 
         if (dr == NULL) {
             set_error(block, "MAILDIR ERROR");
@@ -439,6 +446,7 @@ bool get_maildirs(Block *block) {
         }
 
         // only show if there is mail
+        // TODO this doesn't work because there is no way to know if the current mailbox is the last mailbox
         if (fc > 0) {
             sprintf(fcbuf, "%d", fc);
             sprintf(mdbuf, "%s", md->id);
@@ -447,7 +455,7 @@ bool get_maildirs(Block *block) {
 
             if (i < mdlen-1) {
                 add_text(block, fcbuf, CS_NORMAL, false);
-                add_text(block, ":", CS_NORMAL, false);
+                add_text(block, MAILDIR_SEP_CHR, CS_NORMAL, false);
             }
             else
                 add_text(block, fcbuf, CS_NORMAL, true);
