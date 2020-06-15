@@ -446,9 +446,10 @@ bool get_maildirs(Block *block) {
         dr = opendir(path);
 
         if (dr == NULL) {
-            set_error(block, "MAILDIR ERROR");
+            //set_error(block, "MAILDIR ERROR");
             closedir(dr);
-            return false;
+            //return false;
+            continue;
         }
 
         fc = 0;
