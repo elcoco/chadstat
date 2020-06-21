@@ -54,8 +54,8 @@ void add_text(Block *block, char *text, char *color, bool separator) {
 }
 
 void get_graph(Block *block, uint8_t len, uint8_t perc, char* col) {
-    char graph_chr1 = '|';
-    char graph_chr2 = '|';
+    char graph_chr1 = GRAPH_CHAR_LEFT;
+    char graph_chr2 = GRAPH_CHAR_RIGHT;
     char l_text[21] = {'\0'};
     char r_text[21] = {'\0'};
     len = len + 1;
