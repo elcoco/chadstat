@@ -1,6 +1,5 @@
 #pragma once
 
-// needs fixed color status patch, other one is slow as hell
 #define CS_NORMAL   "#848484"
 #define CS_WARNING  "#ad6500"
 #define CS_OK       "#009900"
@@ -12,6 +11,9 @@
 #define HTTP_SEP_CHR     ":"
 #define MAILDIR_SEP_CHR  ":"
 #define WIRELESS_PATH    "/proc/net/wireless" // don't change
+
+#define GRAPH_CHAR_LEFT  '|'
+#define GRAPH_CHAR_RIGHT '|'
 
 // check these sites and their respective status codes.
 static Site sites[] = {
