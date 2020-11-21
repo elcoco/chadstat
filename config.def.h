@@ -12,7 +12,7 @@
 #define MAILDIR_SEP_CHR  ":"
 #define WIRELESS_PATH    "/proc/net/wireless" // don't change
 #define CAFFEINE_PATH    "/tmp/caffeine.lock"
-#define CAFFEINE_CHR     "C"
+#define CAFFEINE_CHR     "KOFFIE!"
 
 #define GRAPH_CHAR_LEFT  '|'
 #define GRAPH_CHAR_RIGHT '|'

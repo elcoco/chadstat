@@ -489,7 +489,7 @@ bool get_maildirs(Block *block) {
 }
 
 bool get_caffeine(Block *block) {
-    char buf[20] = CAFFEINE_CHR;
+    char buf[100] = CAFFEINE_CHR;
 
     if (!block->enabled) {
         strcpy(block->text, "");
@@ -502,7 +502,7 @@ bool get_caffeine(Block *block) {
     if (access(CAFFEINE_PATH, F_OK ) == -1)
         strcpy(block->text, "");
     else
-        set_text(block, buf, CS_OK, block->sep_chr);
+        set_text(block, buf, CS_WARNING, block->sep_chr);
 
     return is_changed(block);
 }
