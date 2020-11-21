@@ -32,7 +32,7 @@ static Maildir maildirs[] = {
 static Block blocks[] = {
 //    NAME        ENABLED  TIMEOUT  FUNC      TRESHOLD  MAXLEN  SEPARATOR
     { "mpd",      true,          5, get_mpd,        -1,     40,       " "},
-    { "caffeine", true,          5,  get_caffeine,  -1,     40,       " "},
+    { "caffeine", true,          2, get_caffeine,   -1,     40,       " "},
     { "http",     true,         30, get_sites,      -1,     -1,       " "},
     { "battery",  true,         30, get_battery,    10,     10,       " "},
     { "volume",   true,          3, get_volume,     -1,     10,       " "},
