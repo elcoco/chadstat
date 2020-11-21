@@ -64,6 +64,7 @@ bool get_sites(Block *block);
 bool get_wireless(Block *block);
 bool get_mpd(Block *block);
 bool get_maildirs(Block *block);
+bool get_caffeine(Block *block);
 
 // allow config.h to access above functions
 #include "config.h"

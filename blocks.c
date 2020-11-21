@@ -487,3 +487,22 @@ bool get_maildirs(Block *block) {
 
     return is_changed(block);
 }
+
+bool get_caffeine(Block *block) {
+    char buf[20] = CAFFEINE_CHR;
+
+    if (!block->enabled) {
+        strcpy(block->text, "");
+        return false;
+    }
+
+    if (! is_elapsed(block))
+        return false;
+
+    if (access(CAFFEINE_PATH, F_OK ) == -1)
+        strcpy(block->text, "");
+    else
+        set_text(block, buf, CS_OK, block->sep_chr);
+
+    return is_changed(block);
+}
