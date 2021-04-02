@@ -1,3 +1,2 @@
-*.o
-dface
 config.h
+build
