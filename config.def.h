@@ -13,7 +13,7 @@
 #define WIRELESS_PATH    "/proc/net/wireless" // don't change
 #define CAFFEINE_PATH    "/tmp/caffeine.lock"
 #define CAFFEINE_CHR     "KOFFIE!"
-#define SND_CARD_NAME    "default:1"
+#define SND_CARD_NAME    "default"
 
 #define GRAPH_CHAR_LEFT  '|'
 #define GRAPH_CHAR_RIGHT '|'
