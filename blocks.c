@@ -128,8 +128,8 @@ bool get_volume(Block *block) {
     uint16_t volume;
     snd_mixer_t *handle;
     snd_mixer_selem_id_t *sid;
-    const char *card = "default";
-    const char *selem_name = "Master";
+    const char card[] = SND_CARD_NAME;
+    const char selem_name[] = "Master";
 
     if (!block->enabled) {
         strcpy(block->text, "");
@@ -139,15 +139,32 @@ bool get_volume(Block *block) {
     if (! is_elapsed(block))
         return false;
 
-    snd_mixer_open(&handle, 0);
-    snd_mixer_attach(handle, card);
-    snd_mixer_selem_register(handle, NULL, NULL);
-    snd_mixer_load(handle);
+    if (snd_mixer_open(&handle, 0) < 0) {
+        set_error(block, "VOLUME ERROR");
+        return false;
+    }
+    if (snd_mixer_attach(handle, card) < 0) {
+        set_error(block, "VOLUME ERROR");
+        return false;
+    }
+    if (snd_mixer_selem_register(handle, NULL, NULL) < 0) {
+        set_error(block, "VOLUME ERROR");
+        return false;
+    }
+    if (snd_mixer_load(handle) < 0) {
+        set_error(block, "VOLUME ERROR");
+        return false;
+    }
 
     snd_mixer_selem_id_alloca(&sid);
     snd_mixer_selem_id_set_index(sid, 0);
     snd_mixer_selem_id_set_name(sid, selem_name);
+
     snd_mixer_elem_t* elem = snd_mixer_find_selem(handle, sid);
+    if (elem == NULL) {
+        set_error(block, "VOLUME ERROR");
+        return false;
+    }
     snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
     snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &level);
 
