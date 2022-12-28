@@ -26,7 +26,7 @@ static uint8_t get_timeout() {
     uint8_t i;
 
     for (i=0 ; i<bl ; i++) {
-        Block block = blocks[i];
+        struct Block block = blocks[i];
         if (block.timeout < timeout)
             timeout = block.timeout;
     }
@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
     uint8_t blen;
     uint8_t i;
     char chopbuf[1024];
-    Block *block;
+    struct Block *block;
 
     parse_args(&argc, argv);
     print_header();
@@ -86,6 +86,7 @@ int main(int argc, char **argv) {
                 is_changed = true;
         }
 
+
         if (is_changed) {
             printf("[\n");
 
@@ -93,17 +94,19 @@ int main(int argc, char **argv) {
             for (i=0 ; i<blen ; i++, block++) {
 
                 // don't show block if it is empty
-                if (strlen(block->text) > 0) {
+                if (strlen(block->text) <= 0)
+                    continue;
 
-                    // strip last comma + newline
-                    if ( i == blen-1) {
-                        chopbuf[0] = '\0';
-                        strcpy(chopbuf, block->text);
-                        chopbuf[strlen(chopbuf)-2] = '\0';
-                        printf("%s",chopbuf);
-                    }
-                    else
-                        printf("%s",block->text);
+
+                // strip last comma + newline
+                if ( i == blen-1) {
+                    chopbuf[0] = '\0';
+                    strcpy(chopbuf, block->text);
+                    chopbuf[strlen(chopbuf)-2] = '\0';
+                    printf("%s",chopbuf);
+                }
+                else {
+                    printf("%s",block->text);
                 }
             }
 

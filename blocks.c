@@ -2,7 +2,7 @@
 
 /* Helper functions *///////////////////////////////////////////////////////////
 
-bool is_elapsed(Block *block) {
+bool is_elapsed(struct Block *block) {
     // check if time has elapsed, reset time of so
     uint32_t t_cur = time(NULL);
 
@@ -13,7 +13,7 @@ bool is_elapsed(Block *block) {
     return false;
 }
 
-bool is_changed(Block *block) {
+bool is_changed(struct Block *block) {
     // set flag if value has changed
     if (strcmp(block->text, block->text_prev) == 0) {
         return false;
@@ -24,11 +24,11 @@ bool is_changed(Block *block) {
     }
 }
 
-void set_error(Block *block, char* msg) {
+void set_error(struct Block *block, char* msg) {
     set_text(block, msg, CS_ERROR, true);
 }
 
-void set_text(Block *block, char *text, char *color, bool separator) {
+void set_text(struct Block *block, char *text, char *color, bool separator) {
     char buf[256] = {'\0'};
     if (strlen(text) > 0) {
         i3ify(buf, text, color);
@@ -40,7 +40,7 @@ void set_text(Block *block, char *text, char *color, bool separator) {
     }
 }
 
-void add_text(Block *block, char *text, char *color, bool separator) {
+void add_text(struct Block *block, char *text, char *color, bool separator) {
     // append text to block
     char buf[1024] = {'\0'};
     if (strlen(text) > 0) {
@@ -53,7 +53,7 @@ void add_text(Block *block, char *text, char *color, bool separator) {
     }
 }
 
-void get_graph(Block *block, uint8_t len, uint8_t perc, char* col) {
+void get_graph(struct Block *block, uint8_t len, uint8_t perc, char* col) {
     char graph_chr1 = GRAPH_CHAR_LEFT;
     char graph_chr2 = GRAPH_CHAR_RIGHT;
     char l_text[21] = {'\0'};
@@ -77,7 +77,7 @@ void get_graph(Block *block, uint8_t len, uint8_t perc, char* col) {
     add_text(block, r_text, CS_NORMAL, true);
 }
 
-void get_strgraph(Block *block, char* str, uint8_t perc, char* col) {
+void get_strgraph(struct Block *block, char* str, uint8_t perc, char* col) {
     uint8_t len = strlen(str);
     char l_text[50] = {'\0'};
     char r_text[50] = {'\0'};
@@ -104,7 +104,7 @@ void get_strgraph(Block *block, char* str, uint8_t perc, char* col) {
 
 /* Blocks */////////////////////////////////////////////////////////////////////
 
-bool get_datetime(Block *block) {
+bool get_datetime(struct Block *block) {
     time_t t = time(NULL);            // 32bit integer representing time
     struct tm tm = *localtime(&t);    // get struct with time data
     char buf[80];
@@ -122,7 +122,7 @@ bool get_datetime(Block *block) {
     return is_changed(block);
 }
 
-bool get_volume(Block *block) {
+bool get_volume(struct Block *block) {
     long min, max;
     long level;
     uint16_t volume;
@@ -174,7 +174,7 @@ bool get_volume(Block *block) {
     return is_changed(block);
 }
 
-bool get_battery(Block *block) {
+bool get_battery(struct Block *block) {
     char pwrpath[100] = {'\0'};
     char cappath[100] = {'\0'};
     struct dirent *de;  // Pointer for directory entry 
@@ -238,7 +238,7 @@ bool get_battery(Block *block) {
     return is_changed(block);
 }
 
-bool get_sites(Block *block) {
+bool get_sites(struct Block *block) {
     // get lenght of sites array
     uint8_t slen = sizeof(sites)/sizeof(sites[0]);
     char buf[50] = {'\0'};
@@ -257,10 +257,10 @@ bool get_sites(Block *block) {
     block->text[0] = '\0';
 
     for (i=0 ; i<slen ; i++) {
-        Site site = sites[i];
+        struct Site site = sites[i];
         long rescode;
         long* ptr = &rescode;
-        char col[strlen(CS_NORMAL+1)];
+        char col[8];
 
         uint8_t res = do_request(site.url, ptr);
         
@@ -277,14 +277,15 @@ bool get_sites(Block *block) {
             add_text(block, siteid, col, false);
             add_text(block, HTTP_SEP_CHR, CS_NORMAL, false);
         }
-        else
+        else {
             add_text(block, siteid, col, true);
+        }
     }
 
     return is_changed(block);
 }
         
-bool get_wireless(Block *block) {
+bool get_wireless(struct Block *block) {
     if (!block->enabled) {
         strcpy(block->text, "");
         return false;
@@ -346,7 +347,7 @@ bool get_wireless(Block *block) {
     return is_changed(block);
 }
 
-bool get_mpd(Block *block) {
+bool get_mpd(struct Block *block) {
 	struct mpd_connection *conn;
 	struct mpd_status *status;
     struct mpd_song   *song;
@@ -422,14 +423,14 @@ bool get_mpd(Block *block) {
     return is_changed(block);
 }
 
-bool get_maildirs(Block *block) {
+bool get_maildirs(struct Block *block) {
     struct dirent *de;  // Pointer for directory entry 
     char buf[1024] = {'\0'};
     DIR *dr;
     uint8_t mdlen = sizeof(maildirs)/sizeof(maildirs[0]);
     uint32_t fc;
     uint8_t i;
-    Maildir *md;
+    struct Maildir *md;
     char *col;
     char fcbuf[10];
     char mdbuf[10];
@@ -505,7 +506,7 @@ bool get_maildirs(Block *block) {
     return is_changed(block);
 }
 
-bool get_caffeine(Block *block) {
+bool get_caffeine(struct Block *block) {
     char buf[100] = CAFFEINE_CHR;
 
     if (!block->enabled) {
