@@ -19,18 +19,18 @@
 #define GRAPH_CHAR_RIGHT '|'
 
 // check these sites and their respective status codes.
-static Site sites[] = {
+static struct Site sites[] = {
 //   URL                                ID      EXPECTED STATUS CODE
     {"https://duckduckgo.com",          "DDG",  200}
 };
 
 // check these maildirs for new mail
-static Maildir maildirs[] = {
+static struct Maildir maildirs[] = {
 //   MAILDIR PATH                  ID
     {"/home/user/mail/Inbox/new",  "MB"}
 };
 
-static Block blocks[] = {
+static struct Block blocks[] = {
 //    NAME        ENABLED  TIMEOUT  FUNC      TRESHOLD  MAXLEN  SEPARATOR
     { "mpd",      true,          5, get_mpd,        -1,     40,       " "},
     { "caffeine", true,          2, get_caffeine,   -1,     40,       " "},
