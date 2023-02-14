@@ -1,6 +1,6 @@
 #pragma once
 
-#define CS_NORMAL   "#848484"
+#define CS_NORMAL   "#aaaaaa"
 #define CS_WARNING  "#ad6500"
 #define CS_OK       "#009900"
 #define CS_ERROR    "#ff0000"
