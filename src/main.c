@@ -1,6 +1,6 @@
 #include <X11/Xlib.h>
 
-#include "blocks.h"
+#include "blocks/blocks.h"
 
 static void xsetroot(const char *name);
 static void die(char* msg);

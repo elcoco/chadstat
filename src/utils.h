@@ -1,6 +1,6 @@
 #pragma once
 
-#include "blocks.h"
+#include "blocks/blocks.h"
 
 
 int8_t do_request(const char* url, long* response_code);

@@ -67,4 +67,4 @@ bool get_maildirs(struct Block *block);
 bool get_caffeine(struct Block *block);
 
 // allow config.h to access above functions
-#include "config.h"
+#include "../config.h"
