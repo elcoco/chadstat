@@ -241,7 +241,6 @@ bool get_battery(struct Block *block) {
 bool get_sites(struct Block *block) {
     // get lenght of sites array
     uint8_t slen = sizeof(sites)/sizeof(sites[0]);
-    char buf[50] = {'\0'};
     uint8_t i;
     char siteid[20] = {'\0'};
 
@@ -361,8 +360,9 @@ bool get_mpd(struct Block *block) {
         return false;
     }
 
-    if (! is_elapsed(block))
+    if (!is_elapsed(block)) {
         return false;
+    }
 
 	conn = mpd_connection_new(NULL, 0, 30000);
 
@@ -425,13 +425,11 @@ bool get_mpd(struct Block *block) {
 
 bool get_maildirs(struct Block *block) {
     struct dirent *de;  // Pointer for directory entry 
-    char buf[1024] = {'\0'};
     DIR *dr;
     uint8_t mdlen = sizeof(maildirs)/sizeof(maildirs[0]);
     uint32_t fc;
     uint8_t i;
     struct Maildir *md;
-    char *col;
     char fcbuf[10];
     char mdbuf[10];
     const char *pptr;
@@ -520,7 +518,7 @@ bool get_caffeine(struct Block *block) {
     if (access(CAFFEINE_PATH, F_OK ) == -1)
         strcpy(block->text, "");
     else
-        set_text(block, buf, CS_WARNING, block->sep_chr);
+        set_text(block, buf, CS_WARNING, true);
 
     return is_changed(block);
 }

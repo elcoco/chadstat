@@ -1,24 +1,17 @@
-CC = gcc
-CFLAGS = -lasound -lcurl -Wall -lX11 -lmpdclient
+SRC := src
+OBJ := obj
+CFLAGS := -g -Wall 
+LIBS   := -lasound -lcurl -lX11 -lmpdclient
+CC := cc
 
-# target: dependencies
-# 	  action
+$(shell mkdir -p $(OBJ))
+NAME := $(shell basename $(shell pwd))
 
-dface: main.o blocks.o utils.o
-	$(CC) main.o blocks.o utils.o $(CFLAGS) -o dface
+SOURCES := $(wildcard $(SRC)/*.c)
+OBJECTS := $(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SOURCES))
 
-main.o: main.c 
-	$(CC) -c main.c
+all: $(OBJECTS)
+	$(CC) $^ $(CFLAGS) $(LIBS) -o $@ -o $(NAME)
 
-blocks.o: blocks.c blocks.h
-	$(CC) -c blocks.c
-
-utils.o: utils.c utils.h
-	$(CC) -c utils.c
-
-clean:
-	rm *.o
-
-install:
-	cp -f dface ~/bin/apps
-	chmod +x ~/bin/apps/dface
+$(OBJ)/%.o: $(SRC)/%.c
+	$(CC) -I$(SRC) $(CFLAGS) $(LIBS) -c $< -o $@
