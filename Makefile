@@ -1,6 +1,6 @@
 SRCDIR := src
 OBJDIR := obj
-CFLAGS := -g -Wall 
+CFLAGS := -g -Wall -Wno-unused-variable
 LIBS   := -lasound -lcurl -lX11 -lmpdclient
 CC := cc
 

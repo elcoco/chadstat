@@ -1,8 +1,8 @@
 #include <X11/Xlib.h>
 
-#include "blocks/blocks.h"
+//#include "block.h"
+#include "config.h"
 
-static void xsetroot(const char *name);
 static void die(char* msg);
 static void parse_args(int*, char** argv);
 static uint8_t get_timeout();
@@ -22,10 +22,10 @@ static void usage() {
 static uint8_t get_timeout() {
     /* get the smallest timeout value defined in the blocks array */
     uint8_t timeout = 60;
-    uint8_t bl = sizeof(blocks)/sizeof(blocks[0]);
+    uint8_t blen = sizeof(blocks)/sizeof(blocks[0]);
     uint8_t i;
 
-    for (i=0 ; i<bl ; i++) {
+    for (i=0 ; i<blen ; i++) {
         struct Block block = blocks[i];
         if (block.timeout < timeout)
             timeout = block.timeout;
