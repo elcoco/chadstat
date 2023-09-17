@@ -22,7 +22,7 @@
     # Build
     make
 
-    # Add config to i3 config file and restart.
+    # Add config to i3 config file and restart:
     bar {
         ...
         status_command /path/to/chadstat/chadstat
