@@ -20,8 +20,8 @@ static void die(char *msg) {
 }
 
 static void usage() {
-    printf("dface, a statusline for DWM, © 2020 spambaconspam@protonmail.com, released under GPL3\n");
-    printf("usage: dface [-t seconds] [-h]\n");
+    printf("chadstat, a statusline for I3, © 2020 spambaconspam@protonmail.com, released under GPL3\n");
+    printf("usage: chadstat [-t seconds] [-h]\n");
     exit(0);
 }
 

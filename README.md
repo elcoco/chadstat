@@ -1,4 +1,4 @@
-# Dface :: An I3 status bar
+# Chadstat :: An I3 status bar
 
 ![screenshot.png](screenshot.png)
 
