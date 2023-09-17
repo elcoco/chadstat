@@ -15,8 +15,7 @@
 ## Usage
 
     # ChadStat follows the suckless (https://suckless.org/philosophy) method for configuration management.
-    # Make a copy of the standard config file and edit to customize.
-    # Recompile everytime after making changes.
+    # Make a copy of the standard config file and recompile after making changes.
     cp config.h.def config.h
 
     # Build
