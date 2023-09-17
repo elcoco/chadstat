@@ -7,11 +7,6 @@ bool get_datetime(struct Block *block)
     struct tm tm = *localtime(&t);    // get struct with time data
     char buf[80];
 
-    if (!block->enabled) {
-        strcpy(block->text, "");
-        return false;
-    }
-
     if (! block_is_elapsed(block))
         return false;
 

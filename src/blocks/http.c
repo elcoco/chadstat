@@ -8,11 +8,6 @@ bool get_http(struct Block *block)
     uint8_t i;
     char siteid[20] = {'\0'};
 
-    if (!block->enabled) {
-        strcpy(block->text, "");
-        return false;
-    }
-
     if (! block_is_elapsed(block))
         return false;
 

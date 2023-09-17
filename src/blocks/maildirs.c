@@ -14,11 +14,6 @@ bool get_maildirs(struct Block *block)
     const char *pptr;
     bool newmail = false;
 
-    if (!block->enabled) {
-        strcpy(block->text, "");
-        return false;
-    }
-
     if (! block_is_elapsed(block))
         return false;
 

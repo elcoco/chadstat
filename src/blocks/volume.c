@@ -11,11 +11,6 @@ bool get_volume(struct Block *block)
     const char card[] = SND_CARD_NAME;
     const char selem_name[] = "Master";
 
-    if (!block->enabled) {
-        strcpy(block->text, "");
-        return false;
-    }
-
     if (! block_is_elapsed(block))
         return false;
 

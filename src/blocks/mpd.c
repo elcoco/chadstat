@@ -12,11 +12,6 @@ bool get_mpd(struct Block *block)
 	const char *track;
     char col[10];
 
-    if (!block->enabled) {
-        strcpy(block->text, "");
-        return false;
-    }
-
     if (!block_is_elapsed(block)) {
         return false;
     }

@@ -13,11 +13,6 @@ bool get_battery(struct Block *block)
     DIR *dr;
     strcpy(pwrpath, BATTERY_PATH);
 
-    if (!block->enabled) {
-        strcpy(block->text, "");
-        return false;
-    }
-
     if (! block_is_elapsed(block))
         return false;
 

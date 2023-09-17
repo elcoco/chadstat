@@ -101,11 +101,6 @@ static int8_t get_signal_strength(char* interface)
 
 bool get_network(struct Block *block)
 {
-    if (!block->enabled) {
-        strcpy(block->text, "");
-        return false;
-    }
-
     if (! block_is_elapsed(block))
         return false;
 

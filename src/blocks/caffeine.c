@@ -5,11 +5,6 @@ bool get_caffeine(struct Block *block)
 {
     char buf[100] = CAFFEINE_CHR;
 
-    if (!block->enabled) {
-        strcpy(block->text, "");
-        return false;
-    }
-
     if (! block_is_elapsed(block))
         return false;
 

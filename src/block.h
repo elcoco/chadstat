@@ -13,7 +13,6 @@
 
 struct Block {
     char     name[BLOCK_MAX_NAME];
-    bool     enabled;
     int8_t   timeout;
 
     // function pointer to get_<block_name> for collecting and setting data
