@@ -35,7 +35,6 @@ all: $(OBJECTS)
 $(OBJDIR)/%.o: %.c
 	@echo "== COMPILING SOURCE $< --> OBJECT $@"
 
-	# create object subdir
 	@mkdir -p '$(@D)'
 
 	$(CC) -I$(SRCDIR) $(CFLAGS) $(LIBS) -c $< -o $@

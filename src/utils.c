@@ -2,7 +2,8 @@
 #include "config.h"
 
 
-int8_t do_request(const char* url, long* response_code) {
+int8_t do_request(const char* url, long* response_code)
+{
     CURL *curl = curl_easy_init();
     if(curl) {
         CURLcode res;
@@ -19,96 +20,56 @@ int8_t do_request(const char* url, long* response_code) {
     return -1;
 }
 
-bool is_wlan_connected(const char* ifname, char* protocol) {
-    int sock = -1;
-    struct iwreq pwrq;
-    memset(&pwrq, 0, sizeof(pwrq));
-    strncpy(pwrq.ifr_name, ifname, IFNAMSIZ);
+int strcat_alloc(char **dest, int old_size, char *buf)
+{
+    /* Grow/realloc dest and strncat buf to it
+     * If old_size == 0, do initial allocation
+     * If old_size  > 0, do realloc
+     * If buf is empty do nothing
+     * Returns new buffer size or -1 on error */
+    if (strlen(buf) == 0 )
+        return old_size;
 
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-        perror("socket");
-        close(sock);
-        return 0;
+    int new_size = old_size + strlen(buf) + 1;
+
+    if (old_size == 0) {
+        *dest = malloc(new_size);
+        **dest = '\0';
+    }
+    else {
+        DEBUG("doing realloc\n");
+        DEBUG("  old size:   %d\n", old_size);
+        DEBUG("  strlen old: %ld\n", strlen(*dest));
+        DEBUG("  strlen new: %d\n", new_size);
+        DEBUG("  to append:  %s\n", buf);
+        *dest = realloc(*dest, new_size);
     }
 
-    if (ioctl(sock, SIOCGIWNAME, &pwrq) != -1) {
-        if (protocol) {
-            strncpy(protocol, pwrq.u.name, IFNAMSIZ);
-            close(sock);
-            return 1;
-        }
+    if (*dest == NULL) {
+        //DEBUG("ERROR\n");
+        return -1;
     }
 
-    close(sock);
-    return 0;
+    strncat(*dest, buf, strlen(buf));
+    DEBUG("  result:        %s\n\n", *dest);
+    DEBUG("  strlen result: %ld\n\n", strlen(*dest));
+    return new_size;
 }
 
-int8_t get_ifaddr(char* ifname) {
-    struct ifaddrs *ifaddr, *ifa;
-    int n;
-
-    if (getifaddrs(&ifaddr) == -1) {
-        return -1;
-    }
-
-    /* Walk through linked list, maintaining head pointer so we
-      can free list later */
-
-    for (ifa=ifaddr, n=0 ; ifa!=NULL ; ifa=ifa->ifa_next, n++) {
-        if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_PACKET) {
-            freeifaddrs(ifaddr);
-            continue;
-        }
-
-        char protocol[IFNAMSIZ]  = {0};
-
-        if (is_wlan_connected(ifa->ifa_name, protocol)) {
-            strcpy(ifname, ifa->ifa_name);
-            freeifaddrs(ifaddr);
-            return 0;
-        }
-    }
-
-    freeifaddrs(ifaddr);
-    return -1;
+void i3ify(char *buf, char *text, char *color)
+{
+    sprintf(buf, I3_FMT, text, color);
 }
 
-int8_t get_signal_strength(char* interface) {
-    // exit if file doesn't exist
-    if (access(WIRELESS_PATH, F_OK ) == -1)
-        return -1;
-
-    FILE *fp;
-
-    fp = fopen(WIRELESS_PATH, "r");
-    if (fp == NULL) {
-        fclose(fp);
-        return -1;
-    }
-
-    size_t len = 0;
-    char* line = NULL;
-
-    // get line containing interface name
-    while (getline(&line, &len, fp) != -1) {
-        if (strstr(line, interface))
-            break;
-    }
-
-    fclose(fp);
-
-    if (line == NULL)
-        return -1;
-
-    // split string and get 3rd element
-    char* tok = strtok(line, " ");
-    tok = strtok(NULL, " ");
-    tok = strtok(NULL, " .");
-
-    // convert to integer
-    return atoi(tok);
-}
-
-void i3ify(char *buf, char *text, char *color) {
-    sprintf(buf, "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": 0}", text, color);
+int i3ify_alloc(char **dest, int old_size, char *text, char *color)
+{
+    /* Append a formatted JSON string to dest
+     * Allocate or extend space if necessary.
+     */
+    int tmp_size = strlen(text) + strlen(color) + strlen(I3_FMT) + 1;
+    char *tmp = malloc(tmp_size);
+    sprintf(tmp, I3_FMT, text, color);
+    int new_size = strcat_alloc(dest, old_size, tmp);
+    free(tmp);
+    return new_size;
 }

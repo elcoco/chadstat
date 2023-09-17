@@ -1,7 +1,13 @@
 #include <X11/Xlib.h>
 
-//#include "block.h"
+#include "block.h"
 #include "config.h"
+
+// TODO make block text dynamic
+
+#define I3_HEADER "{ \"version\": 1 } \n[\n[],\n"
+#define I3_BLOCKS_START  "[\n"
+#define I3_BLOCKS_END    "\n],\n"
 
 static void die(char* msg);
 static void parse_args(int*, char** argv);
@@ -59,62 +65,38 @@ static void parse_args(int *argc, char **argv) {
     } 
 }
 
-void print_header() {
-    printf("{ \"version\": 1 } \n[\n[],\n");
-}
-
 int main(int argc, char **argv) {
     bool is_changed;
     uint8_t blen;
     uint8_t i;
-    char chopbuf[1024];
     struct Block *block;
+    blen = sizeof(blocks)/sizeof(blocks[0]);
 
     parse_args(&argc, argv);
-    print_header();
+    printf(I3_HEADER);
+
+    for (int i=0 ; i<blen ; i++)
+        block_init(&blocks[i]);
 
     while (1) {
         is_changed = false;
-        blen = sizeof(blocks)/sizeof(blocks[0]);
-
 
         // update all the statusses and check if they've changed
         block = blocks;
         for (i=0 ; i<blen ; i++, block++) {
-
             if (block->get(block))
                 is_changed = true;
         }
 
-
         if (is_changed) {
-            printf("[\n");
+            printf(I3_BLOCKS_START);
 
-            block = blocks;
-            for (i=0 ; i<blen ; i++, block++) {
+            for (i=0 ; i<blen ; i++)
+                block_print(&blocks[i], i==blen-1);
 
-                // don't show block if it is empty
-                if (strlen(block->text) <= 0)
-                    continue;
-
-
-                // strip last comma + newline
-                if ( i == blen-1) {
-                    chopbuf[0] = '\0';
-                    strcpy(chopbuf, block->text);
-                    chopbuf[strlen(chopbuf)-2] = '\0';
-                    printf("%s",chopbuf);
-                }
-                else {
-                    printf("%s",block->text);
-                }
-            }
-
-            printf("\n],\n");
+            printf(I3_BLOCKS_END);
             fflush(stdout);
         }
-
-
         sleep(get_timeout());
     }
     return 0;

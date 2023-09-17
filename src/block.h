@@ -9,6 +9,8 @@
 
 #include "utils.h"
 
+#define BLOCK_MAX_TEXT_BUF 256
+#define BLOCK_MAX_JSON_BUF 2048
 
 struct Block {
     char     name[20];
@@ -21,10 +23,20 @@ struct Block {
     int8_t   treshold;
     int8_t   maxlen;
     char     sep_chr[10];
+
     uint32_t t_last;
-    char     text[2048];
-    char     text_prev[2048];
+    //char     text[BLOCK_MAX_JSON_BUF];
+    //char     text_prev[BLOCK_MAX_JSON_BUF];
+    char     *text;
+    char     *text_prev;
+    uint32_t  text_len;
 };
+
+
+void block_init(struct Block *block);
+
+void block_print(struct Block *block, bool last);
+void block_reset(struct Block *block);
 
 bool block_is_changed(struct Block *block);
 bool block_is_elapsed(struct Block *block);

@@ -7,19 +7,23 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include <curl/curl.h>      // sites up?
-                            //
-// wireless
-#include <sys/ioctl.h>
-#include <linux/wireless.h>
-#include <ifaddrs.h>        // get network interfaces
-#include <netdb.h>
+#include <curl/curl.h>
+
+
+#define DO_DEBUG 0
+#define DO_INFO  0
+#define DO_ERROR 0
+
+#define DEBUG(M, ...) if(DO_DEBUG){fprintf(stdout, "[DEBUG] " M, ##__VA_ARGS__);}
+#define INFO(M, ...) if(DO_INFO){fprintf(stdout, M, ##__VA_ARGS__);}
+#define ERROR(M, ...) if(DO_ERROR){fprintf(stderr, "[ERROR] (%s:%d) " M, __FILE__, __LINE__, ##__VA_ARGS__);}
+
+#define I3_FMT "{\"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": 0}"
 
 
 int8_t do_request(const char* url, long* response_code);
-bool is_wlan_connected(const char* ifname, char* protocol);
-int8_t get_ifaddr(char* ifname);
-int8_t get_signal_strength(char* interface);
 void i3ify(char *buf, char *text, char *color);
+int strcat_alloc(char **dest, int old_size, char *buf);
+int i3ify_alloc(char **dest, int old_size, char *text, char *color);
 
 #endif

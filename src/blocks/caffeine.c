@@ -13,7 +13,7 @@ bool get_caffeine(struct Block *block) {
         return false;
 
     if (access(CAFFEINE_PATH, F_OK ) == -1)
-        strcpy(block->text, "");
+        block_reset(block);
     else
         block_set_text(block, buf, CS_WARNING, true);
 
