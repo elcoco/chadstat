@@ -2,7 +2,8 @@
 #include "../config.h"
 
 
-bool get_battery(struct Block *block) {
+bool get_battery(struct Block *block)
+{
     char pwrpath[100] = {'\0'};
     char cappath[100] = {'\0'};
     struct dirent *de;  // Pointer for directory entry 
@@ -60,7 +61,7 @@ bool get_battery(struct Block *block) {
 
     col = (atoi(buf) > block->treshold) ? CS_OK : CS_WARNING;
 
-    block_get_graph(block, block->maxlen, atoi(buf), col);
+    block_set_graph(block, block->maxlen, atoi(buf), col);
 
     fclose(fp);
     return block_is_changed(block);

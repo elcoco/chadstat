@@ -2,7 +2,8 @@
 #include "../config.h"
 
 
-bool get_mpd(struct Block *block) {
+bool get_mpd(struct Block *block)
+{
 	struct mpd_connection *conn;
 	struct mpd_status *status;
     struct mpd_song   *song;

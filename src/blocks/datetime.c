@@ -1,7 +1,8 @@
 #include "datetime.h"
 #include "../config.h"
 
-bool get_datetime(struct Block *block) {
+bool get_datetime(struct Block *block)
+{
     time_t t = time(NULL);            // 32bit integer representing time
     struct tm tm = *localtime(&t);    // get struct with time data
     char buf[80];

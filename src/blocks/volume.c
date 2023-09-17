@@ -1,7 +1,8 @@
 #include "volume.h"
 #include "../config.h"
 
-bool get_volume(struct Block *block) {
+bool get_volume(struct Block *block)
+{
     long min, max;
     long level;
     uint16_t volume;
@@ -48,7 +49,7 @@ bool get_volume(struct Block *block) {
     snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &level);
 
     volume = ((float)level/(float)max)*100.00;
-    block_get_graph(block, block->maxlen, volume, CS_WARNING);
+    block_set_graph(block, block->maxlen, volume, CS_WARNING);
     snd_mixer_close(handle);
     return block_is_changed(block);
 }

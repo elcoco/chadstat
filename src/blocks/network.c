@@ -150,9 +150,9 @@ bool get_network(struct Block *block)
         if (strlen((char *)wreq.u.essid.pointer) > 0) {
 
             if (signal > block->treshold)
-                block_get_strgraph(block, (char *)wreq.u.essid.pointer, signal, CS_OK);
+                block_set_strgraph(block, (char *)wreq.u.essid.pointer, signal, CS_OK);
             else
-                block_get_strgraph(block, (char *)wreq.u.essid.pointer, signal, CS_WARNING);
+                block_set_strgraph(block, (char *)wreq.u.essid.pointer, signal, CS_WARNING);
         }
         else {
             block_set_error(block, "DISCONNECTED");

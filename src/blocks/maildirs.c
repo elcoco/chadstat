@@ -1,7 +1,8 @@
 #include "maildirs.h"
 #include "../config.h"
 
-bool get_maildirs(struct Block *block) {
+bool get_maildirs(struct Block *block)
+{
     struct dirent *de;  // Pointer for directory entry 
     DIR *dr;
     uint8_t mdlen = sizeof(maildirs)/sizeof(maildirs[0]);

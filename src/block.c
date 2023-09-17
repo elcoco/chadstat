@@ -2,14 +2,19 @@
 #include "config.h"
 
 
-/* Helper functions *///////////////////////////////////////////////////////////
-
-
 void block_init(struct Block *block)
 {
+    /* Set defaults, is called only once */
     block->text = strdup("");
     block->text_len = 1;
     block->text_prev = strdup("");
+}
+
+void block_reset(struct Block *block)
+{
+    free(block->text);
+    block->text = strdup("");
+    block->text_len = 1;
 }
 
 void block_print(struct Block *block, bool last)
@@ -54,13 +59,6 @@ void block_set_error(struct Block *block, char* msg)
     block_set_text(block, msg, CS_ERROR, true);
 }
 
-void block_reset(struct Block *block)
-{
-    free(block->text);
-    block->text = strdup("");
-    block->text_len = 1;
-}
-
 void block_set_text(struct Block *block, char *text, char *color, bool separator)
 {
     /* Clears and frees text in block, then sets new text */
@@ -78,12 +76,13 @@ void block_add_text(struct Block *block, char *text, char *color, bool separator
         block_add_text(block, block->sep_chr, CS_NORMAL, false);
 }
 
-void block_get_graph(struct Block *block, uint8_t len, uint8_t perc, char* col)
+void block_set_graph(struct Block *block, uint8_t len, uint8_t perc, char* col)
 {
+    /* Set formatted graph in block */
     char graph_chr1 = GRAPH_CHAR_LEFT;
     char graph_chr2 = GRAPH_CHAR_RIGHT;
-    char l_text[21] = {'\0'};
-    char r_text[21] = {'\0'};
+    char l_text[BLOCK_MAX_GRAPH_BUF] = {'\0'};
+    char r_text[BLOCK_MAX_GRAPH_BUF] = {'\0'};
     uint8_t i;
     len++;
 
@@ -102,11 +101,12 @@ void block_get_graph(struct Block *block, uint8_t len, uint8_t perc, char* col)
     block_add_text(block, r_text, CS_NORMAL, true);
 }
 
-void block_get_strgraph(struct Block *block, char* str, uint8_t perc, char* col)
+void block_set_strgraph(struct Block *block, char* str, uint8_t perc, char* col)
 {
+    /* Set formatted graph in block */
     uint8_t len = strlen(str);
-    char l_text[50] = {'\0'};
-    char r_text[50] = {'\0'};
+    char l_text[BLOCK_MAX_GRAPH_BUF] = {'\0'};
+    char r_text[BLOCK_MAX_GRAPH_BUF] = {'\0'};
     uint8_t index = 0;
     uint8_t i;
 

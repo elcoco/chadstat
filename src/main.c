@@ -14,18 +14,22 @@ static void parse_args(int*, char** argv);
 static uint8_t get_timeout();
 static void usage();
 
-static void die(char *msg) {
+
+static void die(char *msg)
+{
     printf("%s", msg);
     exit(0);
 }
 
-static void usage() {
+static void usage()
+{
     printf("chadstat, a statusline for I3, © 2020 spambaconspam@protonmail.com, released under GPL3\n");
     printf("usage: chadstat [-t seconds] [-h]\n");
     exit(0);
 }
 
-static uint8_t get_timeout() {
+static uint8_t get_timeout()
+{
     /* get the smallest timeout value defined in the blocks array */
     uint8_t timeout = 60;
     uint8_t blen = sizeof(blocks)/sizeof(blocks[0]);
@@ -39,7 +43,8 @@ static uint8_t get_timeout() {
     return timeout;
 }
 
-static void parse_args(int *argc, char **argv) {
+static void parse_args(int *argc, char **argv)
+{
     char c;
 
     while ((c=getopt(*argc, argv, "h:")) != -1) {
@@ -65,7 +70,8 @@ static void parse_args(int *argc, char **argv) {
     } 
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     bool is_changed;
     uint8_t blen;
     uint8_t i;
@@ -79,10 +85,10 @@ int main(int argc, char **argv) {
         block_init(&blocks[i]);
 
     while (1) {
-        is_changed = false;
 
-        // update all the statusses and check if they've changed
+        // update all the statusses and check if something has changed
         block = blocks;
+        is_changed = false;
         for (i=0 ; i<blen ; i++, block++) {
             if (block->get(block))
                 is_changed = true;

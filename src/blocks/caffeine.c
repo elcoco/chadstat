@@ -1,7 +1,8 @@
 #include "caffeine.h"
 #include "../config.h"
 
-bool get_caffeine(struct Block *block) {
+bool get_caffeine(struct Block *block)
+{
     char buf[100] = CAFFEINE_CHR;
 
     if (!block->enabled) {

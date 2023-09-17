@@ -1,7 +1,8 @@
 #include "http.h"
 #include "../config.h"
 
-bool get_http(struct Block *block) {
+bool get_http(struct Block *block)
+{
     // get lenght of sites array
     uint8_t slen = sizeof(sites)/sizeof(sites[0]);
     uint8_t i;
