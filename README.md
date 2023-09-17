@@ -1,4 +1,4 @@
-# Chadstat :: An I3 status bar
+# ChadStat :: An I3 status bar
 
 ![screenshot.png](screenshot.png)
 
@@ -14,11 +14,17 @@
 
 ## Usage
 
-    # make a copy of the standard config file
+    # ChadStat follows the [suckless](https://suckless.org/philosophy/) method for configuration management.
+    # Make a copy of the standard config file and edit to customize.
+    # Recompile everytime after making changes.
     cp config.h.def config.h
 
-    # build
+    # Build
     make
 
-    # add config to i3 config file
-    status_command /path/to/chadstat/chadstat
+    # Add config to i3 config file and restart.
+    bar {
+        ...
+        status_command /path/to/chadstat/chadstat
+        ...
+    }
