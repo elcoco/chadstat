@@ -19,3 +19,6 @@
 
     # build
     make
+
+    # add config to i3 config file
+    status_command /path/to/chadstat/chadstat
