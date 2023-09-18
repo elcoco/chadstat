@@ -56,20 +56,15 @@ int strcat_alloc(char **dest, int old_size, char *buf)
     return new_size;
 }
 
-void i3ify(char *buf, char *text, char *color)
-{
-    sprintf(buf, I3_FMT, text, color);
-}
-
-int i3ify_alloc(char **dest, int old_size, char *text, char *color)
+int i3ify_alloc(struct Block *block, char *text, char *color)
 {
     /* Append a formatted JSON string to dest
      * Allocate or extend space if necessary.
      */
-    int tmp_size = strlen(text) + strlen(color) + strlen(I3_FMT) + 1;
+    int tmp_size = strlen(block->name) + strlen(text) + strlen(color) + strlen(I3_FMT) + 1;
     char *tmp = malloc(tmp_size);
-    sprintf(tmp, I3_FMT, text, color);
-    int new_size = strcat_alloc(dest, old_size, tmp);
+    sprintf(tmp, I3_FMT, block->name, text, color);
+    int new_size = strcat_alloc(&(block->text), block->text_len, tmp);
     free(tmp);
     return new_size;
 }

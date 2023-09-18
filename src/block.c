@@ -25,10 +25,15 @@ void block_print(struct Block *block, bool last)
         return;
 
     // strip comma + newline if this is last block
-    if (last)
-        block->text[strlen(block->text) -2] = '\0';
-
-    printf("%s", block->text);
+    if (last) {
+        char *tmp = strdup(block->text);
+        tmp[strlen(block->text) -2] = '\0';
+        printf("%s", tmp);
+        free(tmp);
+    }
+    else {
+        printf("%s", block->text);
+    }
 }
 
 bool block_is_elapsed(struct Block *block)
@@ -69,8 +74,7 @@ void block_set_text(struct Block *block, char *text, char *color, bool separator
 void block_add_text(struct Block *block, char *text, char *color, bool separator)
 {
     /* Append text to block */
-    block->text_len = i3ify_alloc(&(block->text), block->text_len, text, color);
-    block->text_len = strcat_alloc(&(block->text), block->text_len, ",\n");
+    block->text_len = i3ify_alloc(block, text, color);
 
     if (separator)
         block_add_text(block, block->sep_chr, CS_NORMAL, false);
