@@ -15,6 +15,12 @@ struct Site {
     long res_code;       // expected response code
 };
 
+struct HTTP {
+    const char* url;
+    const char* id;
+    long res_code;       // expected response code
+};
+
 #ifndef HTTP_MAX_TIMEOUT
   #define HTTP_MAX_TIMEOUT 1L // max seconds before timeout
 #endif

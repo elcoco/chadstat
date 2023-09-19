@@ -28,5 +28,5 @@ int8_t do_request(const char* url, long* response_code);
 void i3ify(char *buf, char *text, char *color);
 int strcat_alloc(char **dest, int old_size, char *buf);
 int i3ify_alloc(struct Block *block, char *text, char *color);
-
+int run_cmd(char *cmd, char **buf);
 #endif

@@ -1,7 +1,7 @@
 #include "http.h"
 #include "../config.h"
 
-bool get_http(struct Block *block)
+bool get_http_bak(struct Block *block)
 {
     // get lenght of sites array
     uint8_t slen = sizeof(sites)/sizeof(sites[0]);
@@ -39,6 +39,41 @@ bool get_http(struct Block *block)
             block_add_text(block, siteid, col, true);
         }
     }
+
+    return block_is_changed(block);
+}
+
+bool get_http(struct Block *block)
+{
+    if (block->arg == NULL) {
+        block_set_error(block, "UNCONFIGURED");
+        return block_is_changed(block);
+    }
+    if (! block_is_elapsed(block))
+        return false;
+
+    struct HTTP *http = block->arg;
+
+    // clear
+    block->text[0] = '\0';
+
+    long rescode;
+    long* ptr = &rescode;
+    char col[8];
+    char siteid[20] = {'\0'};
+
+    uint8_t res = do_request(http->url, ptr);
+    
+    if (res == CURLE_OK && http->res_code == rescode)
+        strcpy(col, CS_OK);
+    else if (res == CURLE_OPERATION_TIMEDOUT)
+        strcpy(col, CS_WARNING);
+    else
+        strcpy(col, CS_ERROR);
+
+    sprintf(siteid, "%s", http->id);
+
+    block_add_text(block, siteid, col, true);
 
     return block_is_changed(block);
 }

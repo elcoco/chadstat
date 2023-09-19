@@ -22,6 +22,10 @@ struct Block {
     int8_t   maxlen;
     char     sep_chr[BLOCK_MAX_SEPARATOR];
 
+    // args can be configured in config.h and will be casted to the right type
+    // by the get_* functions
+    void    *arg;
+
     uint32_t t_last;
     char     *text;
     uint32_t  text_len;

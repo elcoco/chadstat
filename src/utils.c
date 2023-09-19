@@ -68,3 +68,4 @@ int i3ify_alloc(struct Block *block, char *text, char *color)
     free(tmp);
     return new_size;
 }
+

@@ -122,6 +122,15 @@ int listen_for_input(int sec, char *buf, size_t maxlen)
     return 0;
 }
 
+struct Block* get_block_by_name(struct Block *blocks, int length, const char *name)
+{
+    for (int i=0 ; i<length ; i++) {
+        if (strcmp(blocks[i].name, name) == 0)
+            return &blocks[i];
+    }
+    return NULL;
+}
+
 int main(int argc, char **argv)
 {
     bool is_changed;
@@ -163,9 +172,23 @@ int main(int argc, char **argv)
             if (strlen(buf) < 5)
                 continue;
 
+            // read json
             struct JSONObject *rn = json_load(buf);
             if (rn == NULL)
                 continue;
+
+            // get name from json
+            struct JSONObject *jo = json_get_path(rn, "name");
+            if (jo == NULL)
+                continue;
+
+            char *name = json_get_string(jo);
+            if (name == NULL)
+                continue;
+
+            // get block
+            struct Block *inp_block = get_block_by_name(blocks, blen, name);
+            block_print(inp_block, 0);
 
             json_print(rn, 0);
             json_object_destroy(rn);
