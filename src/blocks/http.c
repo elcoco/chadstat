@@ -1,6 +1,7 @@
 #include "http.h"
 #include "../config.h"
 
+/*
 bool get_http_bak(struct Block *block)
 {
     // get lenght of sites array
@@ -42,17 +43,18 @@ bool get_http_bak(struct Block *block)
 
     return block_is_changed(block);
 }
+*/
 
 bool get_http(struct Block *block)
 {
-    if (block->arg == NULL) {
+    if (block->args == NULL) {
         block_set_error(block, "UNCONFIGURED");
         return block_is_changed(block);
     }
     if (! block_is_elapsed(block))
         return false;
 
-    struct HTTP *http = block->arg;
+    struct HTTPArgs *http = block->args;
 
     // clear
     block->text[0] = '\0';

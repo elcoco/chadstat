@@ -64,14 +64,14 @@ void block_set_error(struct Block *block, char* msg)
     block_set_text(block, msg, CS_ERROR, true);
 }
 
-void block_set_text(struct Block *block, char *text, char *color, bool separator)
+void block_set_text(struct Block *block, const char *text, const char *color, bool separator)
 {
     /* Clears and frees text in block, then sets new text */
     block_reset(block);
     block_add_text(block, text, color, separator);
 }
 
-void block_add_text(struct Block *block, char *text, char *color, bool separator)
+void block_add_text(struct Block *block, const char *text, const char *color, bool separator)
 {
     /* Append text to block */
     block->text_len = i3ify_alloc(block, text, color);

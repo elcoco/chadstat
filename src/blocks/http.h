@@ -15,7 +15,7 @@ struct Site {
     long res_code;       // expected response code
 };
 
-struct HTTP {
+struct HTTPArgs {
     const char* url;
     const char* id;
     long res_code;       // expected response code

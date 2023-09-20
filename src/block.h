@@ -18,13 +18,13 @@ struct Block {
     // function pointer to get_<block_name> for collecting and setting data
     bool     (*get)(struct Block *Block);
 
+    // args must be passed in config.h and will be casted to the right type
+    // by the get_* function above
+    void    *args;
+
     int8_t   treshold;
     int8_t   maxlen;
     char     sep_chr[BLOCK_MAX_SEPARATOR];
-
-    // args can be configured in config.h and will be casted to the right type
-    // by the get_* functions
-    void    *arg;
 
     uint32_t t_last;
     char     *text;
@@ -41,8 +41,8 @@ bool block_is_changed(struct Block *block);
 bool block_is_elapsed(struct Block *block);
 
 void block_set_error(struct Block *block, char* msg);
-void block_set_text(struct Block *block, char *text, char *color, bool separator);
-void block_add_text(struct Block *block, char *text, char *color, bool separator);
+void block_set_text(struct Block *block, const char *text, const char *color, bool separator);
+void block_add_text(struct Block *block, const char *text, const char *color, bool separator);
 void block_set_graph(struct Block *block, uint8_t len, uint8_t perc, char* col);
 void block_set_strgraph(struct Block *block, char* str, uint8_t perc, char* col);
 

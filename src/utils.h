@@ -10,7 +10,6 @@
 #include <curl/curl.h>
 
 
-
 #define DO_DEBUG 0
 #define DO_INFO  0
 #define DO_ERROR 0
@@ -27,6 +26,6 @@ struct Block;
 int8_t do_request(const char* url, long* response_code);
 void i3ify(char *buf, char *text, char *color);
 int strcat_alloc(char **dest, int old_size, char *buf);
-int i3ify_alloc(struct Block *block, char *text, char *color);
+int i3ify_alloc(struct Block *block, const char *text, const char *color);
 int run_cmd(char *cmd, char **buf);
 #endif

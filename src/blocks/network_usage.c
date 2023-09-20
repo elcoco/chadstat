@@ -1,7 +1,11 @@
 #include "network_usage.h"
 #include "../config.h"
 
-int get_line(char *cmd, char *buf, int maxlen)
+static int get_line(char *cmd, char *buf, int maxlen);
+static int parse_line(struct NWUsageParsed *nw, const char *buf);
+static void nw_usage_debug(struct NWUsageParsed *nw);
+
+static int get_line(char *cmd, char *buf, int maxlen)
 {
     int len = 0;
     FILE *fp;
@@ -14,39 +18,47 @@ int get_line(char *cmd, char *buf, int maxlen)
 
     while ((c = fgetc(fp)) != EOF) {
         if (len+2 >= maxlen)
-            return -1;
+            goto cleanup_on_err;
 
         if (c == '\n') {
             buf[len+1] = '\0';
-            return 1;
+            goto cleanup_on_success;
         }
 
         buf[len] = c;
         len++;
     }
 
+cleanup_on_success:
     if (pclose(fp)) {
-        printf("Command not found or exited with error status\n");
+        //printf("Command not found or exited with error status\n");
         return -1;
+        //goto cleanup_on_err;
     }
+    return 0;
 
+cleanup_on_err:
+    pclose(fp);
     return -1;
 }
 
-int parse_line(struct NWUsageParsed *nw, const char *buf)
+static int parse_line(struct NWUsageParsed *nw, const char *buf)
 {
     int field = 0;
     int index = 0;
 
-    char *c = buf;
+    const char *c = buf;
     char tmp[NW_USAGE_MAX_FIELD_SIZE] = "";
 
     for (int i=0 ; i<strlen(buf) ; i++, c++) {
+        // skip stupid spaces
+        if (*c == ' ')
+            continue;
+
         tmp[index] = *c;
         index++;
-        if (index > NW_USAGE_MAX_FIELD_SIZE) {
+        if (index > NW_USAGE_MAX_FIELD_SIZE)
             return -1;
-        }
 
         // end of field
         if (*c == ';') {
@@ -112,7 +124,7 @@ int parse_line(struct NWUsageParsed *nw, const char *buf)
     return -1;
 }
 
-void nw_usage_debug(struct NWUsageParsed *nw)
+static void nw_usage_debug(struct NWUsageParsed *nw)
 {
     printf("api_version: %d\n", nw->api_version);
     printf("iface:       %s\n", nw->iface);
@@ -136,27 +148,44 @@ void nw_usage_debug(struct NWUsageParsed *nw)
 
 bool get_nw_usage(struct Block *block)
 {
+    if (block->args == NULL) {
+        block_set_error(block, "UNCONFIGURED");
+        return block_is_changed(block);
+    }
+
     char cmd[NW_USAGE_MAX_CMD_SIZE] = "";
 
-    struct NWUsageArgs *args = block->arg;
+    struct NWUsageArgs *args = block->args;
 
     sprintf(cmd, NW_USAGE_CMD_FMT, args->iface_name);
 
     char buf[256] = "";
     if (get_line(cmd, buf, 256) < 0) {
-        block_set_error(block, "VNSTAT ERROR");
+        block_set_error(block, "VNSTAT_RUN_ERROR");
         return false;
     }
 
     struct NWUsageParsed nw_usage;
     if (parse_line(&nw_usage, (const char*)buf) < 0) {
-        block_set_error(block, "IFACE ERROR");
+        block_set_error(block, "IFACE_ERROR");
         return false;
     }
 
-    block_set_text(block, nw_usage.iface, CS_OK, false);
+    block_set_text(block, args->alias, CS_OK, false);
     block_add_text(block, ":", CS_NORMAL, false);
-    block_add_text(block, nw_usage.total_today, CS_NORMAL, true);
+
+    switch (args->type) {
+        case NW_USAGE_TOTAL_TODAY:
+            block_add_text(block, nw_usage.total_today, CS_NORMAL, true);
+            break;
+        case NW_USAGE_TOTAL_MONTH:
+            block_add_text(block, nw_usage.total_month, CS_NORMAL, true);
+            break;
+        case NW_USAGE_TOTAL_ALLTIME:
+            block_add_text(block, nw_usage.total_all_time, CS_NORMAL, true);
+            break;
+
+    }
 
     return block_is_changed(block);
 }

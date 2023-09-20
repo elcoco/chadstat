@@ -56,7 +56,7 @@ int strcat_alloc(char **dest, int old_size, char *buf)
     return new_size;
 }
 
-int i3ify_alloc(struct Block *block, char *text, char *color)
+int i3ify_alloc(struct Block *block, const char *text, const char *color)
 {
     /* Append a formatted JSON string to dest
      * Allocate or extend space if necessary.

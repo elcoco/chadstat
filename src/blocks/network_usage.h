@@ -13,8 +13,17 @@
 #define NW_USAGE_MAX_FIELD_SIZE 16
 #define NW_USAGE_AMOUNT_FIELDS  15
 
+// what data to show?
+enum NWUsageType {
+    NW_USAGE_TOTAL_TODAY,
+    NW_USAGE_TOTAL_MONTH,
+    NW_USAGE_TOTAL_ALLTIME,
+};
+
 struct NWUsageArgs {
     const char *iface_name;
+    const char *alias;
+    enum NWUsageType type;
 };
 
 struct NWUsageParsed {
