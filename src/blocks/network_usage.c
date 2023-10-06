@@ -174,18 +174,18 @@ bool get_nw_usage(struct Block *block)
         return false;
     }
 
-    block_set_text(block, args->alias, CS_OK, false);
-    block_add_text(block, ":", CS_NORMAL, false);
+    block_set_text(block, args->alias, args->alias, CS_OK, false);
+    block_add_text(block, args->alias, ":", CS_NORMAL, false);
 
     switch (args->type) {
         case NW_USAGE_TOTAL_TODAY:
-            block_add_text(block, nw_usage.total_today, CS_NORMAL, true);
+            block_add_text(block, "nw_usage_total_today", nw_usage.total_today, CS_NORMAL, true);
             break;
         case NW_USAGE_TOTAL_MONTH:
-            block_add_text(block, nw_usage.total_month, CS_NORMAL, true);
+            block_add_text(block,"nw_usage_total_month",  nw_usage.total_month, CS_NORMAL, true);
             break;
         case NW_USAGE_TOTAL_ALLTIME:
-            block_add_text(block, nw_usage.total_all_time, CS_NORMAL, true);
+            block_add_text(block,"nw_usage_total_all_time",  nw_usage.total_all_time, CS_NORMAL, true);
             break;
 
     }

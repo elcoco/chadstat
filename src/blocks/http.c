@@ -75,7 +75,7 @@ bool get_http(struct Block *block)
 
     sprintf(siteid, "%s", http->id);
 
-    block_add_text(block, siteid, col, true);
+    block_add_text(block, siteid, siteid, col, true);
 
     return block_is_changed(block);
 }

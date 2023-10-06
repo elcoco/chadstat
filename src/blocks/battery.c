@@ -56,7 +56,8 @@ bool get_battery(struct Block *block)
 
     col = (atoi(buf) > block->treshold) ? CS_OK : CS_WARNING;
 
-    block_set_graph(block, block->maxlen, atoi(buf), col);
+    block_reset(block);
+    block_set_graph(block, "battery", block->maxlen, atoi(buf), col);
 
     fclose(fp);
     return block_is_changed(block);

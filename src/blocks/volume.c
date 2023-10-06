@@ -35,7 +35,8 @@ bool get_volume(struct Block *block)
     snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &level);
 
     volume = ((float)level/(float)max)*100.00;
-    block_set_graph(block, block->maxlen, volume, CS_WARNING);
+    block_reset(block);
+    block_set_graph(block, "volume", block->maxlen, volume, CS_WARNING);
     snd_mixer_close(handle);
     //snd_mixer_selem_id_free(sid);
     return block_is_changed(block);

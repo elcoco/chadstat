@@ -6,6 +6,7 @@
 #include <stdint.h>         // uint types
 
 #include "utils.h"
+#include "../block.h"
 
 #define NW_USAGE_CMD_FMT "vnstat -i %s --oneline"
 #define NW_USAGE_MAX_CMD_SIZE 256

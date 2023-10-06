@@ -11,7 +11,7 @@
 
 #define BLOCK_MAX_GRAPH_BUF 64
 #define BLOCK_MAX_NAME 32
-//#define BLOCK_MAX_INSTANCE 32
+#define BLOCK_MAX_INSTANCE 128
 #define BLOCK_MAX_SEPARATOR 16
 
 // Modifier key bits
@@ -30,13 +30,25 @@
 #define BLOCK_MOUSE_SCROLL_DOWN 0b0010000000000000
 
 
+struct BlockClickEvent {
+    int x;
+    int y;
+    int xsize;
+    int ysize;
+
+    char instance[256];
+
+    // 16 bit collection of flags containing the modifier keys/mouse buttons/mouse wheel actions
+    unsigned int mod;
+};
+
 struct Block {
     char     name[BLOCK_MAX_NAME];
     int8_t   timeout;
 
     // function pointer to get_<block_name> for collecting and setting data
     bool     (*get)(struct Block *Block);
-    int      (*set)(struct Block *Block);
+    int      (*set)(struct Block *Block, struct BlockClickEvent *ev);
 
     // args must be passed in config.h and will be casted to the right type
     // by the get_* function above
@@ -46,24 +58,13 @@ struct Block {
     int8_t   maxlen;
     char     sep_chr[BLOCK_MAX_SEPARATOR];
 
-    //char     instance[BLOCK_MAX_INSTANCE];
+    char     instance[BLOCK_MAX_INSTANCE];
 
     uint32_t t_last;
     char     *text;
     uint32_t  text_len;
     char     *text_prev;
 };
-
-struct BlockClickEvent {
-    int x;
-    int y;
-    int xsize;
-    int ysize;
-
-    // 16 bit collection of flags containing the modifier keys/mouse buttons/wheel
-    unsigned int mod;
-};
-
 
 
 
@@ -75,10 +76,10 @@ bool block_is_changed(struct Block *block);
 bool block_is_elapsed(struct Block *block);
 
 void block_set_error(struct Block *block, char* msg);
-void block_set_text(struct Block *block, const char *text, const char *color, bool separator);
-void block_add_text(struct Block *block, const char *text, const char *color, bool separator);
-void block_set_graph(struct Block *block, uint8_t len, uint8_t perc, char* col);
-void block_set_strgraph(struct Block *block, char* str, uint8_t perc, char* col);
+void block_set_text(struct Block *block, const char *instance, const char *text, const char *color, bool separator);
+void block_add_text(struct Block *block, const char *instance, const char *text, const char *color, bool separator);
+void block_set_graph(struct Block *block, const char *instance, uint8_t len, uint8_t perc, char* col);
+void block_set_strgraph(struct Block *block, const char *instance, char* str, uint8_t perc, char* col);
 
 int block_event_init(struct JSONObject *jo, struct BlockClickEvent *ev);
 

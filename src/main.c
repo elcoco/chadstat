@@ -3,6 +3,7 @@
 #include "block.h"
 #include "config.h"
 #include "lib/json/json.h"
+#include "lib/mpris/mpris.h"
 
 // TODO make block text dynamic
 
@@ -145,6 +146,7 @@ int main(int argc, char **argv)
     for (int i=0 ; i<blen ; i++)
         block_init(&blocks[i]);
 
+    
     while (1) {
 
         // update all the statusses and check if something has changed
@@ -195,8 +197,6 @@ int main(int argc, char **argv)
                 continue;
             }
 
-            // TODO put json into struct and pass as argument to set func
-
             if (inp_block->set == NULL) {
                 json_object_destroy(rn);
                 continue;
@@ -205,10 +205,10 @@ int main(int argc, char **argv)
             struct BlockClickEvent ev;
             block_event_init(rn, &ev);
 
-            //block_print(inp_block, 0);
-            json_print(rn, 0);
-            inp_block->set(inp_block);
+            if (inp_block->set(inp_block, &ev))
+                inp_block->t_last = 0;
 
+            //json_print(rn, 0);
             json_object_destroy(rn);
 
             fflush(stdout);

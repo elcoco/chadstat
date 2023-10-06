@@ -18,7 +18,7 @@
 #define INFO(M, ...) if(DO_INFO){fprintf(stdout, M, ##__VA_ARGS__);}
 #define ERROR(M, ...) if(DO_ERROR){fprintf(stderr, "[ERROR] (%s:%d) " M, __FILE__, __LINE__, ##__VA_ARGS__);}
 
-#define I3_FMT "{\"name\": \"%s\", \"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": 0},\n"
+#define I3_FMT "{\"name\": \"%s\", \"instance\": \"%s\", \"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": 0},\n"
 
 struct Block;
 
@@ -26,7 +26,7 @@ struct Block;
 int8_t do_request(const char* url, long* response_code);
 void i3ify(char *buf, char *text, char *color);
 int strcat_alloc(char **dest, int old_size, char *buf);
-int i3ify_alloc(struct Block *block, const char *text, const char *color);
+int i3ify_alloc(struct Block *block, const char *instance, const char *text, const char *color);
 int run_cmd(char *cmd, char **buf);
 
 void print_bin(unsigned int num);

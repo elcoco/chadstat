@@ -1,9 +1,16 @@
 SRCDIR := src
 OBJDIR := obj
-#CFLAGS := -g -Wall
-CFLAGS := -g -Wall -Wno-unused-variable
+
+PKGCONFIG = $(shell which pkg-config)
+#CFLAGS := -g -Wall -Wno-unused-variable
+CFLAGS = -g -Wall -Wno-unused-variable $(shell $(PKGCONFIG) --cflags gtk4 --libs dbus-1)
+
 LIBS   := -lasound -lcurl -lX11 -lmpdclient
 CC := cc
+
+# for gtk (gdebus interface to MPRIS)
+LDLIBS = $(shell pkg-config --libs gtk4)
+
 
 $(shell mkdir -p $(OBJ))
 NAME := $(shell basename $(shell pwd))
@@ -20,9 +27,9 @@ OBJECTS := $(SOURCES:%.c=$(OBJDIR)/%.o)
 
 all: $(OBJECTS)
 	@echo "== LINKING EXECUTABLE: $(NAME)"
-	$(CC) $^ $(CFLAGS) $(LIBS) -o $@ -o $(NAME)
+	$(CC) $^ $(CFLAGS) $(LIBS) $(LDLIBS) -o $@ -o $(NAME)
 
 $(OBJDIR)/%.o: %.c
 	@echo "== COMPILING SOURCE $< --> OBJECT $@"
 	@mkdir -p '$(@D)'
-	$(CC) -I$(SRCDIR) $(CFLAGS) $(LIBS) -c $< -o $@
+	$(CC) -I$(SRCDIR) $(CFLAGS) $(LIBS) $(LDLIBS) -c $< -o $@

@@ -8,6 +8,7 @@ void block_init(struct Block *block)
     block->text = strdup("");
     block->text_len = 1;
     block->text_prev = strdup("");
+    block->instance[0] = '\0';
 }
 
 void block_reset(struct Block *block)
@@ -61,26 +62,26 @@ bool block_is_changed(struct Block *block)
 
 void block_set_error(struct Block *block, char* msg)
 {
-    block_set_text(block, msg, CS_ERROR, true);
+    block_set_text(block, "error", msg, CS_ERROR, true);
 }
 
-void block_set_text(struct Block *block, const char *text, const char *color, bool separator)
+void block_set_text(struct Block *block, const char *instance, const char *text, const char *color, bool separator)
 {
     /* Clears and frees text in block, then sets new text */
     block_reset(block);
-    block_add_text(block, text, color, separator);
+    block_add_text(block, instance, text, color, separator);
 }
 
-void block_add_text(struct Block *block, const char *text, const char *color, bool separator)
+void block_add_text(struct Block *block, const char *instance, const char *text, const char *color, bool separator)
 {
     /* Append text to block */
-    block->text_len = i3ify_alloc(block, text, color);
+    block->text_len = i3ify_alloc(block, instance, text, color);
 
     if (separator)
-        block_add_text(block, block->sep_chr, CS_NORMAL, false);
+        block_add_text(block, instance, block->sep_chr, CS_NORMAL, false);
 }
 
-void block_set_graph(struct Block *block, uint8_t len, uint8_t perc, char* col)
+void block_set_graph(struct Block *block, const char *instance, uint8_t len, uint8_t perc, char* col)
 {
     /* Set formatted graph in block */
     char graph_chr1 = GRAPH_CHAR_LEFT;
@@ -100,12 +101,12 @@ void block_set_graph(struct Block *block, uint8_t len, uint8_t perc, char* col)
     for (i=0 ; i<len-level ; i++)
         r_text[i] = graph_chr2;
 
-    block->text[0] = '\0';
-    block_set_text(block, l_text, col, false);
-    block_add_text(block, r_text, CS_NORMAL, true);
+    //block->text[0] = '\0';
+    block_add_text(block, instance, l_text, col, false);
+    block_add_text(block, instance, r_text, CS_NORMAL, true);
 }
 
-void block_set_strgraph(struct Block *block, char* str, uint8_t perc, char* col)
+void block_set_strgraph(struct Block *block, const char *instance, char* str, uint8_t perc, char* col)
 {
     /* Set formatted graph in block */
     uint8_t len = strlen(str);
@@ -127,9 +128,9 @@ void block_set_strgraph(struct Block *block, char* str, uint8_t perc, char* col)
         r_text[i] = str[index];
         index++;
     }
-    block->text[0] = '\0';
-    block_set_text(block, l_text, col, false);
-    block_add_text(block, r_text, CS_NORMAL, true);
+    //block->text[0] = '\0';
+    block_add_text(block, instance, l_text, col, false);
+    block_add_text(block, instance, r_text, CS_NORMAL, true);
 }
 
 
@@ -188,8 +189,6 @@ int block_event_init(struct JSONObject *jo, struct BlockClickEvent *ev)
     if (mouse_obj == NULL)
         return -1;
 
-    printf("button pressed: %d\n", (int)json_get_number(mouse_obj));
-
     switch ((int)json_get_number(mouse_obj)) {
         case 1:
             ev->mod = ev->mod | BLOCK_LMB_PRESSED;
@@ -232,7 +231,16 @@ int block_event_init(struct JSONObject *jo, struct BlockClickEvent *ev)
     ev->xsize = (int)json_get_number(width_obj);
     ev->ysize = (int)json_get_number(height_obj);
 
-    block_event_debug(ev);
+    //block_event_debug(ev);
+    struct JSONObject *instance_obj = json_get_path(jo, "instance");
+    if (instance_obj == NULL)
+        return -1;
+
+    char *instance_str = json_get_string(instance_obj);
+    if (instance_str == NULL)
+        return -1;
+
+    strcpy(ev->instance, instance_str);
 
     return 1;
 }
