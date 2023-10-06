@@ -149,6 +149,8 @@ bool get_network(struct Block *block)
                 block_set_strgraph(block, ifaddr, (char *)wreq.u.essid.pointer, signal, CS_OK);
             else
                 block_set_strgraph(block, ifaddr, (char *)wreq.u.essid.pointer, signal, CS_WARNING);
+
+            block_add_text(block, "", "", CS_NORMAL, true);
         }
         else {
             block_set_error(block, "DISCONNECTED");

@@ -130,7 +130,7 @@ void block_set_strgraph(struct Block *block, const char *instance, char* str, ui
     }
     //block->text[0] = '\0';
     block_add_text(block, instance, l_text, col, false);
-    block_add_text(block, instance, r_text, CS_NORMAL, true);
+    block_add_text(block, instance, r_text, CS_NORMAL, false);
 }
 
 

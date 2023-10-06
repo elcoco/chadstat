@@ -72,7 +72,10 @@ bool get_mpris(struct Block *block)
 
 
         // TODO pass instance, need to change all calls to set_strgraph/set_text etc...
+        block_add_text(block, mp->namespace, "MPRIS", CS_WARNING, false);
+        block_add_text(block, mp->namespace, ":", CS_NORMAL, false);
         block_set_strgraph(block, mp->namespace, buf, pos_perc, CS_OK);
+        block_add_text(block, mp->namespace, " ", CS_WARNING, false);
 
         mp = mp->next;
     }
