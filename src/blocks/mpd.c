@@ -1,6 +1,11 @@
 #include "mpd.h"
 #include "../config.h"
 
+int set_mpd(struct Block *block)
+{
+    printf("disko\n");
+    return 1;
+}
 
 bool get_mpd(struct Block *block)
 {
@@ -12,17 +17,13 @@ bool get_mpd(struct Block *block)
 	const char *track;
     char col[10];
 
-    if (!block_is_elapsed(block)) {
+    if (!block_is_elapsed(block))
         return false;
-    }
 
-	conn = mpd_connection_new(NULL, 0, 30000);
+    conn = mpd_connection_new(NULL, 0, 30000);
 
-	if (mpd_connection_get_error(conn) != MPD_ERROR_SUCCESS) {
-        mpd_connection_free(conn);
-        block_set_error(block, "MPD CONNECTION ERROR");
-        return block_is_changed(block);
-	}
+	if (mpd_connection_get_error(conn) != MPD_ERROR_SUCCESS)
+        goto on_conn_err;
 
     mpd_command_list_begin(conn, true);
     mpd_send_status(conn);
@@ -30,11 +31,8 @@ bool get_mpd(struct Block *block)
     mpd_command_list_end(conn);
 
     status = mpd_recv_status(conn);
-    if (status == NULL) {
-        mpd_connection_free(conn);
-        block_set_error(block, "MPD CONNECTION ERROR");
-        return block_is_changed(block);
-    }
+    if (status == NULL)
+        goto on_conn_err;
 
     if ( mpd_status_get_state(status) < MPD_STATE_PLAY) {
         block_set_text(block, "STOPPED", CS_NORMAL, true);
@@ -44,11 +42,8 @@ bool get_mpd(struct Block *block)
 
     mpd_status_free(status);
 
-    if (mpd_connection_get_error(conn) != MPD_ERROR_SUCCESS) {
-        mpd_connection_free(conn);
-        block_set_error(block, "MPD CONNECTION ERROR");
-        return block_is_changed(block);
-    }
+    if (mpd_connection_get_error(conn) != MPD_ERROR_SUCCESS)
+        goto on_conn_err;
 
     mpd_response_next(conn);
 
@@ -73,4 +68,10 @@ bool get_mpd(struct Block *block)
 
     //strcat(block->text, block->sep_chr);
     return block_is_changed(block);
+
+on_conn_err:
+    mpd_connection_free(conn);
+    block_set_error(block, "MPD CONNECTION ERROR");
+    return block_is_changed(block);
+
 }

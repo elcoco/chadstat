@@ -10,5 +10,6 @@
 #include "../block.h"
 
 bool get_mpd(struct Block *block);
+int set_mpd(struct Block *block);
 
 #endif

@@ -130,8 +130,7 @@ bool get_network(struct Block *block)
 
     if((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
         block_set_error(block, "SOCKET ERROR");
-        close(sockfd);
-        return block_is_changed(block);
+        goto cleanup;
     }
 
     // ioctl manipulates device parameters of special files
@@ -139,7 +138,7 @@ bool get_network(struct Block *block)
 
     if (ioctl(sockfd,SIOCGIWESSID, &wreq) == -1) {
         block_set_error(block, "IOCTL ERROR");
-        return block_is_changed(block);
+        goto cleanup;
     }
     else {
         if (strlen((char *)wreq.u.essid.pointer) > 0) {
@@ -151,9 +150,10 @@ bool get_network(struct Block *block)
         }
         else {
             block_set_error(block, "DISCONNECTED");
-            return block_is_changed(block);
         }
     }
+
+cleanup:
     close(sockfd);
     return block_is_changed(block);
 }

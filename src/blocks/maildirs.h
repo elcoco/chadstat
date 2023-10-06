@@ -8,14 +8,10 @@
 #include "../block.h"
 
 
-struct Maildir {
+struct MaildirArgs {
+    const char* name;
     const char* path;
-    const char* id;
 };
-
-#ifndef MAILDIR_SEP_CHR
-  #define MAILDIR_SEP_CHR  ":"
-#endif
 
 bool get_maildirs(struct Block *block);
 

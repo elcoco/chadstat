@@ -12,7 +12,7 @@ static int get_line(char *cmd, char *buf, int maxlen)
     char c;
 
     if ((fp = popen(cmd, "r")) == NULL) {
-        printf("Error opening pipe!\n");
+        DEBUG("NW_USAGE: Error opening pipe!\n");
         return -1;
     }
 
@@ -31,7 +31,7 @@ static int get_line(char *cmd, char *buf, int maxlen)
 
 cleanup_on_success:
     if (pclose(fp)) {
-        //printf("Command not found or exited with error status\n");
+        DEBUG("NW_USAGE: Command not found or exited with error status\n");
         return -1;
         //goto cleanup_on_err;
     }
@@ -148,6 +148,9 @@ static void nw_usage_debug(struct NWUsageParsed *nw)
 
 bool get_nw_usage(struct Block *block)
 {
+    if (! block_is_elapsed(block))
+        return false;
+
     if (block->args == NULL) {
         block_set_error(block, "UNCONFIGURED");
         return block_is_changed(block);

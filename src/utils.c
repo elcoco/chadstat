@@ -69,3 +69,14 @@ int i3ify_alloc(struct Block *block, const char *text, const char *color)
     return new_size;
 }
 
+void print_bin(unsigned int num)
+{
+    for (int i=sizeof(num)*8-1 ; i>=0 ; i--) {
+        if (num & (0x01 << i))
+            printf("1");
+        else
+            printf("0");
+    }
+    printf("\n");
+
+}

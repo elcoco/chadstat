@@ -10,7 +10,14 @@ bool get_datetime(struct Block *block)
     if (! block_is_elapsed(block))
         return false;
 
-    strftime(buf, 100, DATETIME_FMT, &tm);
+    if (block->args == NULL) {
+        block_set_error(block, "UNCONFIGURED");
+        return block_is_changed(block);
+    }
+
+    struct DateTimeArgs *args = block->args;
+
+    strftime(buf, 100, args->fmt, &tm);
     block_set_text(block, buf, CS_NORMAL, true);
     return block_is_changed(block);
 }

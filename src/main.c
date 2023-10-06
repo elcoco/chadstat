@@ -183,15 +183,34 @@ int main(int argc, char **argv)
                 continue;
 
             char *name = json_get_string(jo);
-            if (name == NULL)
+            if (name == NULL) {
+                json_object_destroy(rn);
                 continue;
+            }
 
             // get block
             struct Block *inp_block = get_block_by_name(blocks, blen, name);
-            block_print(inp_block, 0);
+            if (inp_block == NULL) {
+                json_object_destroy(rn);
+                continue;
+            }
 
+            // TODO put json into struct and pass as argument to set func
+
+            if (inp_block->set == NULL) {
+                json_object_destroy(rn);
+                continue;
+            }
+
+            struct BlockClickEvent ev;
+            block_event_init(rn, &ev);
+
+            //block_print(inp_block, 0);
             json_print(rn, 0);
+            inp_block->set(inp_block);
+
             json_object_destroy(rn);
+
             fflush(stdout);
         }
     }

@@ -9,10 +9,10 @@
 
 #include "../block.h"
 
-#ifndef DATETIME_FMT
-  #define DATETIME_FMT "%a %d:%m:%Y %H:%M"
-#endif
 
+struct DateTimeArgs {
+    const char *fmt;
+};
 
 bool get_datetime(struct Block *block);
 
