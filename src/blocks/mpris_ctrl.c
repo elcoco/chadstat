@@ -71,9 +71,16 @@ bool get_mpris(struct Block *block)
         snprintf(buf, block->maxlen, "%s", mp->metadata->title);
 
 
-        // TODO pass instance, need to change all calls to set_strgraph/set_text etc...
         block_add_text(block, mp->namespace, "MPRIS", CS_WARNING, false);
-        block_add_text(block, mp->namespace, ":", CS_NORMAL, false);
+        if (mp->properties->status == MPRIS_STATUS_PLAYING)
+            block_add_text(block, mp->namespace, MPRIS_CHR_PLAY, CS_WARNING, false);
+        else
+            //block_add_text(block, mp->namespace, MPRIS_CHR_PAUSE, CS_WARNING, false);
+            block_add_text(block, mp->namespace, ":", CS_NORMAL, false);
+        //else
+        //else
+        //    block_add_text(block, mp->namespace, MPRIS_CHR_PAUSE, CS_NORMAL, false);
+
         block_set_strgraph(block, mp->namespace, buf, pos_perc, CS_OK);
         block_add_text(block, mp->namespace, " ", CS_WARNING, false);
 

@@ -80,3 +80,27 @@ void print_bin(unsigned int num)
     printf("\n");
 
 }
+
+char* get_escaped_alloc(const char *src)
+{
+    /* Read input string, remove chars and return allocated string
+     * With result */
+    int cnt = 0;
+
+    // first count chars so we know how much space to allocate
+    for (int i=0 ; i<strlen(src) ; i++) {
+        if (strchr(ESCAPE_CHRS, src[i]))
+            cnt++;
+    }
+
+    char *buf = malloc(strlen(src) + cnt + 1);
+    char *p = buf;
+
+    for (int i=0 ; i<strlen(src) ; i++) {
+        if (strchr(ESCAPE_CHRS, src[i]))
+            *p++ = '\\';
+        *p++ = src[i];
+    }
+    *p = '\0';
+    return buf;
+}

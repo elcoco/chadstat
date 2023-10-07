@@ -20,6 +20,8 @@
 
 #define I3_FMT "{\"name\": \"%s\", \"instance\": \"%s\", \"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": 0},\n"
 
+#define ESCAPE_CHRS "\"\'\\"
+
 struct Block;
 
 
@@ -30,4 +32,6 @@ int i3ify_alloc(struct Block *block, const char *instance, const char *text, con
 int run_cmd(char *cmd, char **buf);
 
 void print_bin(unsigned int num);
+char* get_escaped_alloc(const char *src);
+
 #endif

@@ -74,11 +74,15 @@ void block_set_text(struct Block *block, const char *instance, const char *text,
 
 void block_add_text(struct Block *block, const char *instance, const char *text, const char *color, bool separator)
 {
+    char *text_escaped = get_escaped_alloc(text);
+
     /* Append text to block */
-    block->text_len = i3ify_alloc(block, instance, text, color);
+    block->text_len = i3ify_alloc(block, instance, text_escaped, color);
 
     if (separator)
         block_add_text(block, instance, block->sep_chr, CS_NORMAL, false);
+
+    free(text_escaped);
 }
 
 void block_set_graph(struct Block *block, const char *instance, uint8_t len, uint8_t perc, char* col)
@@ -136,7 +140,6 @@ void block_set_strgraph(struct Block *block, const char *instance, char* str, ui
 
 static void block_event_debug(struct BlockClickEvent *ev)
 {
-
     printf("x:         %d\n", ev->x);
     printf("y:         %d\n", ev->y);
     printf("xsize:     %d\n", ev->xsize);

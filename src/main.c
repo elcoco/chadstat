@@ -148,7 +148,6 @@ int main(int argc, char **argv)
 
     
     while (1) {
-
         // update all the statusses and check if something has changed
         block = blocks;
         is_changed = false;
@@ -205,8 +204,8 @@ int main(int argc, char **argv)
             struct BlockClickEvent ev;
             block_event_init(rn, &ev);
 
-            if (inp_block->set(inp_block, &ev))
-                inp_block->t_last = 0;
+            inp_block->set(inp_block, &ev);
+            inp_block->t_last = 0;
 
             //json_print(rn, 0);
             json_object_destroy(rn);
