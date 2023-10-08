@@ -87,7 +87,7 @@ char* get_escaped_alloc(const char *src)
      * With result */
     int cnt = 0;
 
-    // first count chars so we know how much space to allocate
+    // first count escapable chars so we know how much space to allocate
     for (int i=0 ; i<strlen(src) ; i++) {
         if (strchr(ESCAPE_CHRS, src[i]))
             cnt++;
