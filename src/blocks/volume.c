@@ -1,7 +1,22 @@
 #include "volume.h"
 #include "../config.h"
 
-bool get_volume(struct Block *block)
+
+int set_pulse_volume(struct Block *block, struct BlockClickEvent *ev)
+{
+    if (ev->mod & BLOCK_LMB_PRESSED)
+        pa_toggle_mute();
+    else if (ev->mod & BLOCK_MOUSE_SCROLL_UP)
+        pa_adjust_volume(10);
+    else if (ev->mod & BLOCK_MOUSE_SCROLL_DOWN)
+        pa_adjust_volume(-10);
+    else
+        return 0;
+
+    return 1;
+}
+
+bool get_alsa_volume(struct Block *block)
 {
     long min, max;
     long level;
@@ -48,5 +63,17 @@ cleanup_on_err:
         snd_mixer_selem_id_free(sid);
 
     block_set_error(block, "VOLUME ERROR");
+    return block_is_changed(block);
+}
+
+bool get_pulse_volume(struct Block *block)
+{
+    if (! block_is_elapsed(block))
+        return false;
+
+    block_reset(block);
+    int vol_perc = pa_get_volume();
+    block_set_graph(block, "volume", block->maxlen, vol_perc, CS_WARNING);
+
     return block_is_changed(block);
 }

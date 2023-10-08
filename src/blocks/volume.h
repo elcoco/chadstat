@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include <alsa/asoundlib.h> // alsa master volume info
+#include "../lib/pulseaudio/pulse.h"
  
 #include "../block.h"
 
@@ -14,6 +15,8 @@
   #define SND_CARD_NAME    "default"
 #endif
 
-bool get_volume(struct Block *block);
+bool get_alsa_volume(struct Block *block);
+bool get_pulse_volume(struct Block *block);
+int set_pulse_volume(struct Block *block, struct BlockClickEvent *ev);
 
 #endif

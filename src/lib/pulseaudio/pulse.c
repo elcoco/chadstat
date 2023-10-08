@@ -21,17 +21,37 @@ static void exit_signal_callback(pa_mainloop_api *m, pa_signal_event *e, int sig
 static void quit(int ret)
 {
     /* call from callbacks to quit mainloop */
-    printf("quit\n");
     assert(mainloop_api);
     mainloop_api->quit(mainloop_api, ret);
+}
+
+static void get_sink_volume_callback(pa_context *c, const pa_sink_info *i, int is_last, void *userdata)
+{
+    /* Callback is ran by context_state_callback() when context is ready
+     */
+
+    struct PAAction *action = userdata;
+    pa_cvolume cv;
+
+    if (is_last < 0) {
+        printf("Failed to get sink information: %s", pa_strerror(pa_context_errno(c)));
+        quit(1);
+        return;
+    }
+
+    if (is_last)
+        return;
+
+    assert(i);
+    cv = i->volume;
+    action->value = cv.values[0] / ((double) PA_VOLUME_NORM / 100);
+    quit(0);
 }
 
 static void set_rel_sink_volume_callback(pa_context *c, const pa_sink_info *i, int is_last, void *userdata)
 {
     /* Callback is ran by context_state_callback() when context is ready
      */
-    printf("setting sink volume\n");
-
     struct PAAction *action = userdata;
     pa_cvolume cv;
     pa_operation *o;
@@ -53,7 +73,6 @@ static void set_rel_sink_volume_callback(pa_context *c, const pa_sink_info *i, i
         double vol_prev = cv.values[c] / ((double) PA_VOLUME_NORM / 100);
         double vol_new =  (action->value+vol_prev) * (double) PA_VOLUME_NORM / 100;
         cv.values[c] = (pa_volume_t)vol_new;
-        printf("Setting chan %d => %f%% %f\n", c, vol_prev+action->value, vol_new);
     }
 
     o = pa_context_set_sink_volume_by_name(c, action->sink_name, &cv, NULL, NULL);
@@ -61,7 +80,6 @@ static void set_rel_sink_volume_callback(pa_context *c, const pa_sink_info *i, i
     if (o)
         pa_operation_unref(o);
 
-    printf("done setting sink volume\n");
     quit(0);
 }
 
@@ -69,7 +87,6 @@ static void get_default_sink_callback(pa_context *c, const pa_server_info *i, vo
 {
     struct PAAction *action = userdata;
     strcpy(action->sink_name, i->default_sink_name);
-    printf("default sink: %s\n", i->default_sink_name);
     quit(0);
 }
 
@@ -77,7 +94,6 @@ static void set_sink_mute_callback(pa_context *c, const pa_sink_info *i, int is_
 {
     /* Callback is ran by context_state_callback() when context is ready
      */
-    printf("setting sink mute\n");
     struct PAAction *action = userdata;
 
     if (is_last < 0) {
@@ -103,7 +119,6 @@ static void set_sink_mute_callback(pa_context *c, const pa_sink_info *i, int is_
             break;
     }
 
-    printf("done setting sink volume\n");
     quit(0);
 }
 
@@ -113,7 +128,6 @@ static void context_state_callback(pa_context *c, void *userdata)
 
     struct PAAction *action = userdata;
     pa_operation* o = NULL;
-    printf("Start op\n");
 
     if (action->action == PA_ACTION_SET_SINK_INFO)
         //o = pa_context_get_sink_info_list(c, action->cb, action);
@@ -123,7 +137,6 @@ static void context_state_callback(pa_context *c, void *userdata)
 
     if (o)
         pa_operation_unref(o);
-    printf("End op\n");
 }
 
 static void pa_cleanup()
@@ -281,4 +294,27 @@ int pa_toggle_mute()
 
     pa_run();
     return 0;
+}
+
+double pa_get_volume()
+{
+    struct PAAction action;
+
+    get_active_sink(&action);
+    if (strlen(action.sink_name) == 0)
+        return -1;
+
+    action.action = PA_ACTION_GET_SINK_VOLUME;
+    action.cb = &get_sink_volume_callback;
+
+    if (pa_init() < 0) {
+        pa_cleanup();
+        return -1;
+    }
+
+    // Set a callback so we can wait for the context to be ready
+    pa_context_set_state_callback(context, context_state_callback, &action);
+
+    pa_run();
+    return action.value;
 }
