@@ -23,7 +23,8 @@ enum PAActionFlags {
     PA_ACTION_SET_UNMUTED,
     PA_ACTION_TOGGLE_MUTED,
     PA_ACTION_SET_SINK_INFO,
-    PA_ACTION_GET_SINK_VOLUME
+    PA_ACTION_GET_SINK_VOLUME,
+    PA_ACTION_IS_MUTED
 };
 
 #define MAX_SINK_BUF 256
@@ -42,6 +43,7 @@ int pa_mute();
 int pa_unmute();
 int pa_toggle_mute();
 double pa_get_volume();
+int pa_is_muted();
 
 
 #endif

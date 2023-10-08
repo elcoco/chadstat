@@ -72,8 +72,22 @@ bool get_pulse_volume(struct Block *block)
         return false;
 
     block_reset(block);
-    int vol_perc = pa_get_volume();
-    block_set_graph(block, "volume", block->maxlen, vol_perc, CS_WARNING);
 
+    if (pa_is_muted()) {
+        block_add_text(block, "volume", "SND:MUTED", CS_WARNING, 1);
+        return block_is_changed(block);
+    }
+
+    //block_add_text(block, "volume", "SND", CS_WARNING, 0);
+    //block_add_text(block, "volume", ":", CS_NORMAL, 0);
+
+    char text[256] = "SND";
+    for (int i=0 ; i<block->maxlen ; i++) {
+        strcat(text, "|");
+    }
+
+    int vol_perc = pa_get_volume();
+    block_set_strgraph(block, "volume", text, vol_perc, CS_WARNING);
+    block_add_text(block, "volume", "", CS_WARNING, 1);
     return block_is_changed(block);
 }

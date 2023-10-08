@@ -25,6 +25,26 @@ static void quit(int ret)
     mainloop_api->quit(mainloop_api, ret);
 }
 
+static void get_sink_is_muted_callback(pa_context *c, const pa_sink_info *i, int is_last, void *userdata)
+{
+    /* Callback is ran by context_state_callback() when context is ready
+     */
+    struct PAAction *action = userdata;
+
+    if (is_last < 0) {
+        printf("Failed to get sink information: %s", pa_strerror(pa_context_errno(c)));
+        quit(1);
+        return;
+    }
+
+    if (is_last)
+        return;
+
+    assert(i);
+    action->value = i->mute;
+    quit(0);
+}
+
 static void get_sink_volume_callback(pa_context *c, const pa_sink_info *i, int is_last, void *userdata)
 {
     /* Callback is ran by context_state_callback() when context is ready
@@ -306,6 +326,29 @@ double pa_get_volume()
 
     action.action = PA_ACTION_GET_SINK_VOLUME;
     action.cb = &get_sink_volume_callback;
+
+    if (pa_init() < 0) {
+        pa_cleanup();
+        return -1;
+    }
+
+    // Set a callback so we can wait for the context to be ready
+    pa_context_set_state_callback(context, context_state_callback, &action);
+
+    pa_run();
+    return action.value;
+}
+
+int pa_is_muted()
+{
+    struct PAAction action;
+
+    get_active_sink(&action);
+    if (strlen(action.sink_name) == 0)
+        return -1;
+
+    action.action = PA_ACTION_IS_MUTED;
+    action.cb = &get_sink_is_muted_callback;
 
     if (pa_init() < 0) {
         pa_cleanup();
