@@ -81,7 +81,7 @@ bool get_mpd(struct Block *block)
         goto on_conn_err;
 
     if ( mpd_status_get_state(status) < MPD_STATE_PLAY) {
-        block_set_text(block, "mpd", "STOPPED", CS_NORMAL, true);
+        block_set_text(block, "mpd", "STOPPED", block->cs->disabled);
         mpd_connection_free(conn);
         return block_is_changed(block);
     }
@@ -99,7 +99,7 @@ bool get_mpd(struct Block *block)
         pos = mpd_status_get_elapsed_ms(status) / 1000;
         pos_perc = ((float)pos/(float)length) * 100;
 
-        strcpy(col, (mpd_status_get_state(status) == MPD_STATE_PLAY) ? CS_WARNING : CS_OK);
+        strcpy(col, (mpd_status_get_state(status) == MPD_STATE_PLAY) ? block->cs->active : block->cs->inactive);
 
         char buf[256] = {'\0'};
 
@@ -109,10 +109,9 @@ bool get_mpd(struct Block *block)
             snprintf(buf, block->maxlen, "%s - [%s] %s", artist, track, title);
 
         block_reset(block);
-        block_add_text(block, "mpd", "MPD", CS_WARNING, false);
-        block_add_text(block, "mpd", ":", CS_NORMAL, false);
-        block_set_strgraph(block, "mpd", buf, pos_perc, col);
-        block_add_text(block, "", "", CS_NORMAL, true);
+        block_add_text(block, "mpd", "MPD", block->cs->label);
+        block_add_text(block, "mpd", ":", block->cs->separator_block);
+        block_set_strgraph(block, "mpd", buf, pos_perc, col, block->cs->graph_right);
 
         mpd_song_free(song);
     }

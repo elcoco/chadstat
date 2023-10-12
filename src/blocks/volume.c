@@ -51,7 +51,7 @@ bool get_alsa_volume(struct Block *block)
 
     volume = ((float)level/(float)max)*100.00;
     block_reset(block);
-    block_set_graph(block, "volume", block->maxlen, volume, CS_WARNING);
+    block_set_graph(block, "volume", block->maxlen, volume, block->cs->ok, block->cs->graph_right);
     snd_mixer_close(handle);
     //snd_mixer_selem_id_free(sid);
     return block_is_changed(block);
@@ -74,12 +74,9 @@ bool get_pulse_volume(struct Block *block)
     block_reset(block);
 
     if (pa_is_muted()) {
-        block_add_text(block, "volume", "SND:MUTED", CS_WARNING, 1);
+        block_add_text(block, "volume", "SND:MUTED", block->cs->disabled);
         return block_is_changed(block);
     }
-
-    //block_add_text(block, "volume", "SND", CS_WARNING, 0);
-    //block_add_text(block, "volume", ":", CS_NORMAL, 0);
 
     char text[256] = "SND";
     for (int i=0 ; i<block->maxlen ; i++) {
@@ -87,7 +84,7 @@ bool get_pulse_volume(struct Block *block)
     }
 
     int vol_perc = pa_get_volume();
-    block_set_strgraph(block, "volume", text, vol_perc, CS_WARNING);
-    block_add_text(block, "volume", "", CS_WARNING, 1);
+    block_set_strgraph(block, "volume", text, vol_perc, block->cs->graph_left, block->cs->graph_right);
+    block_add_text(block, "volume", "", block->cs->separator);
     return block_is_changed(block);
 }

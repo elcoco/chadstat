@@ -159,8 +159,10 @@ int main(int argc, char **argv)
         if (is_changed) {
             printf(I3_BLOCKS_START);
 
-            for (i=0 ; i<blen ; i++)
+            for (i=0 ; i<blen ; i++) {
+
                 block_print(&blocks[i], i==blen-1);
+            }
 
             printf(I3_BLOCKS_END);
             fflush(stdout);

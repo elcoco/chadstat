@@ -54,9 +54,8 @@ bool get_maildirs(struct Block *block)
         sprintf(fcbuf, "%d", fcount);
         sprintf(mdbuf, "%s", args->name);
 
-        block_add_text(block, mdbuf, mdbuf, CS_OK, false);
-        block_add_text(block, mdbuf, fcbuf, CS_NORMAL, false);
-        block_add_text(block, "", block->sep_chr, CS_NORMAL, false);
+        block_add_text(block, mdbuf, mdbuf, block->cs->label);
+        block_add_text(block, mdbuf, fcbuf, block->cs->normal);
     }
 
 on_cleanup:

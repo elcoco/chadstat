@@ -20,7 +20,7 @@
 
 #define I3_FMT "{\"name\": \"%s\", \"instance\": \"%s\", \"full_text\": \"%s\", \"color\": \"%s\", \"separator\": false, \"separator_block_width\": 0},\n"
 
-#define ESCAPE_CHRS "\"\'\\"
+#define ESCAPE_CHRS "\"\\"
 
 struct Block;
 

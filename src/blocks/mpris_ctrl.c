@@ -71,27 +71,26 @@ bool get_mpris(struct Block *block)
         snprintf(buf, block->maxlen, "%s", mp->metadata->title);
 
 
-        block_add_text(block, mp->namespace, "MPRIS", CS_WARNING, false);
-        if (mp->properties->status == MPRIS_STATUS_PLAYING)
-            block_add_text(block, mp->namespace, MPRIS_CHR_PLAY, CS_WARNING, false);
-        else
+        block_add_text(block, mp->namespace, "MPRIS", block->cs->label);
+        if (mp->properties->status == MPRIS_STATUS_PLAYING) {
+            //block_add_text(block, mp->namespace, MPRIS_CHR_PLAY, block->cs->active, false);
+            block_add_text(block, mp->namespace, ":", block->cs->separator_block);
+            block_set_strgraph(block, mp->namespace, buf, pos_perc, block->cs->active, block->cs->graph_right);
+        }
+        else {
             //block_add_text(block, mp->namespace, MPRIS_CHR_PAUSE, CS_WARNING, false);
-            block_add_text(block, mp->namespace, ":", CS_NORMAL, false);
+            block_add_text(block, mp->namespace, ":", block->cs->separator_block);
+            block_set_strgraph(block, mp->namespace, buf, pos_perc, block->cs->inactive, block->cs->graph_right);
+        }
         //else
         //else
         //    block_add_text(block, mp->namespace, MPRIS_CHR_PAUSE, CS_NORMAL, false);
 
-        block_set_strgraph(block, mp->namespace, buf, pos_perc, CS_OK);
-        block_add_text(block, mp->namespace, " ", CS_WARNING, false);
+        if (mp->next != NULL)
+            block_add_text(block, mp->namespace, " ", block->cs->separator_block);
 
         mp = mp->next;
     }
-
-
-
-    //snprintf(buf, block->maxlen, "%s", "bever");
-
-    //block_set_strgraph(block, buf, pos_perc, CS_OK);
 
 cleanup:
     if (mp_head != NULL)

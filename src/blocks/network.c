@@ -146,11 +146,11 @@ bool get_network(struct Block *block)
             block_reset(block);
 
             if (signal > block->treshold)
-                block_set_strgraph(block, ifaddr, (char *)wreq.u.essid.pointer, signal, CS_OK);
+                block_set_strgraph(block, ifaddr, (char *)wreq.u.essid.pointer, signal, block->cs->ok, block->cs->graph_right);
             else
-                block_set_strgraph(block, ifaddr, (char *)wreq.u.essid.pointer, signal, CS_WARNING);
+                block_set_strgraph(block, ifaddr, (char *)wreq.u.essid.pointer, signal, block->cs->warning, block->cs->graph_right);
 
-            block_add_text(block, "", "", CS_NORMAL, true);
+            block_add_text(block, "", "", block->cs->separator);
         }
         else {
             block_set_error(block, "DISCONNECTED");

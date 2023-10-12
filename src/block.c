@@ -2,6 +2,8 @@
 #include "config.h"
 
 
+static void block_print_separator(struct Block *block);
+
 void block_init(struct Block *block)
 {
     /* Set defaults, is called only once */
@@ -31,9 +33,11 @@ void block_print(struct Block *block, bool last)
         tmp[strlen(block->text) -2] = '\0';
         printf("%s", tmp);
         free(tmp);
+
     }
     else {
         printf("%s", block->text);
+        block_print_separator(block);
     }
 }
 
@@ -62,30 +66,34 @@ bool block_is_changed(struct Block *block)
 
 void block_set_error(struct Block *block, char* msg)
 {
-    block_set_text(block, "error", msg, CS_ERROR, true);
+    block_set_text(block, "error", msg, block->cs->error);
 }
 
-void block_set_text(struct Block *block, const char *instance, const char *text, const char *color, bool separator)
+void block_set_text(struct Block *block, const char *instance, const char *text, const char *color)
 {
     /* Clears and frees text in block, then sets new text */
     block_reset(block);
-    block_add_text(block, instance, text, color, separator);
+    block_add_text(block, instance, text, color);
 }
 
-void block_add_text(struct Block *block, const char *instance, const char *text, const char *color, bool separator)
+void block_add_text(struct Block *block, const char *instance, const char *text, const char *color)
 {
-    char *text_escaped = get_escaped_alloc(text);
-
     /* Append text to block */
+    char *text_escaped = get_escaped_alloc(text);
     block->text_len = i3ify_alloc(block, instance, text_escaped, color);
-
-    if (separator)
-        block_add_text(block, instance, block->sep_chr, CS_NORMAL, false);
-
     free(text_escaped);
 }
 
-void block_set_graph(struct Block *block, const char *instance, uint8_t len, uint8_t perc, char* col)
+static void block_print_separator(struct Block *block)
+{
+    int tmp_size = strlen(block->name) + strlen(block->instance) + strlen(block->sep_chr) + strlen(block->cs->separator) + strlen(I3_FMT) + 1;
+    char *tmp = malloc(tmp_size);
+    sprintf(tmp, I3_FMT, block->name, block->instance, block->sep_chr, block->cs->separator);
+    printf("%s", tmp);
+    free(tmp);
+}
+
+void block_set_graph(struct Block *block, const char *instance, uint8_t len, uint8_t perc, const char* lcol, const char *rcol)
 {
     /* Set formatted graph in block */
     char graph_chr1 = GRAPH_CHAR_LEFT;
@@ -106,11 +114,11 @@ void block_set_graph(struct Block *block, const char *instance, uint8_t len, uin
         r_text[i] = graph_chr2;
 
     //block->text[0] = '\0';
-    block_add_text(block, instance, l_text, col, false);
-    block_add_text(block, instance, r_text, CS_NORMAL, true);
+    block_add_text(block, instance, l_text, lcol);
+    block_add_text(block, instance, r_text, rcol);
 }
 
-void block_set_strgraph(struct Block *block, const char *instance, char* str, uint8_t perc, char* col)
+void block_set_strgraph(struct Block *block, const char *instance, char* str, uint8_t perc, const char *lcol, const char *rcol)
 {
     /* Set formatted graph in block */
     uint8_t len = strlen(str);
@@ -133,8 +141,8 @@ void block_set_strgraph(struct Block *block, const char *instance, char* str, ui
         index++;
     }
     //block->text[0] = '\0';
-    block_add_text(block, instance, l_text, col, false);
-    block_add_text(block, instance, r_text, CS_NORMAL, false);
+    block_add_text(block, instance, l_text, lcol);
+    block_add_text(block, instance, r_text, rcol);
 }
 
 

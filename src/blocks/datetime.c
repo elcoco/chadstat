@@ -18,6 +18,6 @@ bool get_datetime(struct Block *block)
     struct DateTimeArgs *args = block->args;
 
     strftime(buf, 100, args->fmt, &tm);
-    block_set_text(block, "datetime", buf, CS_NORMAL, true);
+    block_set_text(block, "datetime", buf, block->cs->normal);
     return block_is_changed(block);
 }

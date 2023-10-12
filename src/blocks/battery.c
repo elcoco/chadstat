@@ -9,7 +9,7 @@ bool get_battery(struct Block *block)
     struct dirent *de;  // Pointer for directory entry 
     FILE *fp;
     char buf[100] = {'\0'};
-    char* col;
+    const char* col;
     DIR *dr;
     strcpy(pwrpath, BATTERY_PATH);
 
@@ -54,10 +54,10 @@ bool get_battery(struct Block *block)
     // remove trailing newlines
     strtok(buf, "\n");
 
-    col = (atoi(buf) > block->treshold) ? CS_OK : CS_WARNING;
+    col = (atoi(buf) > block->treshold) ? block->cs->ok : block->cs->warning;
 
     block_reset(block);
-    block_set_graph(block, "battery", block->maxlen, atoi(buf), col);
+    block_set_graph(block, "battery", block->maxlen, atoi(buf), col, block->cs->graph_right);
 
     fclose(fp);
     return block_is_changed(block);
