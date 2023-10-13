@@ -33,12 +33,9 @@ int set_mpris(struct Block *block, struct BlockClickEvent *ev)
 
         mp = mp->next;
     }
-
-
 cleanup:
     if (mp_head != NULL)
         mpris_player_destroy_all(mp_head);
-
 
     return ret;
 }

@@ -29,6 +29,15 @@
 #define BLOCK_MOUSE_SCROLL_UP   0x01 << 11
 #define BLOCK_MOUSE_SCROLL_DOWN 0x01 << 12
 
+#ifndef BLOCK_GRAPH_CHAR_LEFT
+    #define BLOCK_GRAPH_CHAR_LEFT  '|'
+#endif
+
+#ifndef BLOCK_GRAPH_CHAR_RIGHT
+    #define BLOCK_GRAPH_CHAR_RIGHT '|'
+#endif
+
+
 
 struct BlockClickEvent {
     int x;

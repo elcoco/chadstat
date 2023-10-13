@@ -74,7 +74,7 @@ bool get_pulse_volume(struct Block *block)
     block_reset(block);
 
     if (pa_is_muted()) {
-        block_add_text(block, "volume", "SND:MUTED", block->cs->disabled);
+        block_add_text(block, "volume", "SND_MUTED", block->cs->disabled);
         return block_is_changed(block);
     }
 

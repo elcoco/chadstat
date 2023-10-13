@@ -3,6 +3,26 @@
 
 
 static void block_print_separator(struct Block *block);
+static void block_event_debug(struct BlockClickEvent *ev);
+
+static void block_print_separator(struct Block *block)
+{
+    int tmp_size = strlen(block->name) + strlen(block->instance) + strlen(block->sep_chr) + strlen(block->cs->separator) + strlen(I3_FMT) + 1;
+    char *tmp = malloc(tmp_size);
+    sprintf(tmp, I3_FMT, block->name, block->instance, block->sep_chr, block->cs->separator);
+    printf("%s", tmp);
+    free(tmp);
+}
+
+static void block_event_debug(struct BlockClickEvent *ev)
+{
+    printf("x:         %d\n", ev->x);
+    printf("y:         %d\n", ev->y);
+    printf("xsize:     %d\n", ev->xsize);
+    printf("ysize:     %d\n", ev->ysize);
+    printf("modifiers: ");
+    print_bin(ev->mod);
+}
 
 void block_init(struct Block *block)
 {
@@ -84,20 +104,9 @@ void block_add_text(struct Block *block, const char *instance, const char *text,
     free(text_escaped);
 }
 
-static void block_print_separator(struct Block *block)
-{
-    int tmp_size = strlen(block->name) + strlen(block->instance) + strlen(block->sep_chr) + strlen(block->cs->separator) + strlen(I3_FMT) + 1;
-    char *tmp = malloc(tmp_size);
-    sprintf(tmp, I3_FMT, block->name, block->instance, block->sep_chr, block->cs->separator);
-    printf("%s", tmp);
-    free(tmp);
-}
-
 void block_set_graph(struct Block *block, const char *instance, uint8_t len, uint8_t perc, const char* lcol, const char *rcol)
 {
     /* Set formatted graph in block */
-    char graph_chr1 = GRAPH_CHAR_LEFT;
-    char graph_chr2 = GRAPH_CHAR_RIGHT;
     char l_text[BLOCK_MAX_GRAPH_BUF] = {'\0'};
     char r_text[BLOCK_MAX_GRAPH_BUF] = {'\0'};
     uint8_t i;
@@ -109,9 +118,9 @@ void block_set_graph(struct Block *block, const char *instance, uint8_t len, uin
     int8_t level = (perc / 100.0) * len;
 
     for (i=0 ; i<level ; i++)
-        l_text[i] = graph_chr1;
+        l_text[i] = BLOCK_GRAPH_CHAR_LEFT;
     for (i=0 ; i<len-level ; i++)
-        r_text[i] = graph_chr2;
+        r_text[i] = BLOCK_GRAPH_CHAR_RIGHT;
 
     //block->text[0] = '\0';
     block_add_text(block, instance, l_text, lcol);
@@ -143,17 +152,6 @@ void block_set_strgraph(struct Block *block, const char *instance, char* str, ui
     //block->text[0] = '\0';
     block_add_text(block, instance, l_text, lcol);
     block_add_text(block, instance, r_text, rcol);
-}
-
-
-static void block_event_debug(struct BlockClickEvent *ev)
-{
-    printf("x:         %d\n", ev->x);
-    printf("y:         %d\n", ev->y);
-    printf("xsize:     %d\n", ev->xsize);
-    printf("ysize:     %d\n", ev->ysize);
-    printf("modifiers: ");
-    print_bin(ev->mod);
 }
 
 int block_event_init(struct JSONObject *jo, struct BlockClickEvent *ev)
@@ -255,3 +253,12 @@ int block_event_init(struct JSONObject *jo, struct BlockClickEvent *ev)
 
     return 1;
 }
+
+//int block_set(struct Block *block, struct BlockClickEvent *ev)
+//{
+//    /* Blocks have set function pointers that handle input events
+//     * When a block only needs to immediately refresh its contents without
+//     * any special handling, this function can be passed
+//     */
+//    return 1;
+//}

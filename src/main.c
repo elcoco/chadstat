@@ -5,8 +5,6 @@
 #include "lib/json/json.h"
 #include "lib/mpris/mpris.h"
 
-// TODO make block text dynamic
-
 //#define I3_HEADER "{ \"version\": 1 } \n[\n[],\n"
 #define I3_HEADER "{ \"version\":1,\"click_events\":true} \n[\n[],\n"
 #define I3_BLOCKS_START  "[\n"
@@ -79,13 +77,11 @@ int listen_for_input(int sec, char *buf, size_t maxlen)
 {
     /* Listen for input on STDIN.
      * Block for max SEC seconds.
-     * Return after reading \n
+     * Return after reading '\n'
      */
-    // timeout structure passed into select
     struct timeval tv;
-    // fd_set passed into select
     fd_set fds;
-    // Set up the timeout.  here we can wait for 1 second
+    // Set up the timeout
     tv.tv_sec = sec;
     tv.tv_usec = 0;
     int len = 0;
@@ -99,8 +95,7 @@ int listen_for_input(int sec, char *buf, size_t maxlen)
     // the last parameter is the timeout.  select will return if an FD is ready or 
     // the timeout has occurred
     select(STDIN_FILENO+1, &fds, NULL, NULL, &tv);
-    // return 0 if STDIN is not ready to be read.
-    //
+    
     while (FD_ISSET(STDIN_FILENO, &fds)) {
         char ch;
         if (read(STDIN_FILENO, &ch, 1) > 0) {
@@ -117,7 +112,6 @@ int listen_for_input(int sec, char *buf, size_t maxlen)
 
             buf[len] = ch;
             len++;
-
         }
     }
     return 0;
@@ -169,7 +163,7 @@ int main(int argc, char **argv)
         }
 
         char buf[I3_MAX_CLICK_EVENT_BUFSIZE] = "";
-        if (listen_for_input(get_timeout(), buf, I3_MAX_CLICK_EVENT_BUFSIZE)) {
+        if (listen_for_input(get_timeout(), buf, sizeof(buf))) {
 
             // skip array char
             if (strlen(buf) < 5)

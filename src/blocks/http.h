@@ -21,15 +21,8 @@ struct HTTPArgs {
     const char* url;
     const char* id;
     long res_code;       // expected response code
+    long timeout;
 };
-
-#ifndef HTTP_MAX_TIMEOUT
-  #define HTTP_MAX_TIMEOUT 1L // max seconds before timeout
-#endif
-
-//#ifndef HTTP_SEP_CHR
-//  #define HTTP_SEP_CHR     ":"
-//#endif
 
 bool get_http(struct Block *block);
 

@@ -3,15 +3,15 @@
 
 bool get_caffeine(struct Block *block)
 {
-    char buf[100] = CAFFEINE_CHR;
-
     if (! block_is_elapsed(block))
         return false;
 
-    if (access(CAFFEINE_PATH, F_OK ) == -1)
+    struct CaffeineArgs *args = block->args;
+
+    if (access(args->path, F_OK ) == -1)
         block_reset(block);
     else
-        block_set_text(block, CAFFEINE_PATH, buf, block->cs->enabled);
+        block_set_text(block, args->path, args->alias, block->cs->enabled);
 
     return block_is_changed(block);
 }

@@ -8,13 +8,10 @@
 #include "../block.h"
 
 
-#ifndef CAFFEINE_CHR
-  #define CAFFEINE_CHR     "KOFFIE!"
-#endif
-
-#ifndef CAFFEINE_PATH
-  #define CAFFEINE_PATH    "/tmp/caffeine.lock"
-#endif
+struct CaffeineArgs {
+    char *path;
+    char *alias;
+};
 
 bool get_caffeine(struct Block *block);
 
