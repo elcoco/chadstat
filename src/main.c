@@ -165,6 +165,7 @@ int main(int argc, char **argv)
         char buf[I3_MAX_CLICK_EVENT_BUFSIZE] = "";
         if (listen_for_input(get_timeout(), buf, sizeof(buf))) {
 
+
             // skip array char
             if (strlen(buf) < 5)
                 continue;
@@ -173,6 +174,7 @@ int main(int argc, char **argv)
             struct JSONObject *rn = json_load(buf);
             if (rn == NULL)
                 continue;
+
 
             // get name from json
             struct JSONObject *jo = json_get_path(rn, "name");

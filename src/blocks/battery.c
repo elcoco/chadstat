@@ -56,8 +56,19 @@ bool get_battery(struct Block *block)
 
     col = (atoi(buf) > block->treshold) ? block->cs->ok : block->cs->warning;
 
+    
     block_reset(block);
-    block_set_graph(block, "battery", block->maxlen, atoi(buf), col, block->cs->graph_right);
+    char text[256] = "PWR";
+    for (int i=0 ; i<block->maxlen ; i++) {
+        strcat(text, "|");
+    }
+    block_set_strgraph(block, "volume", text, atoi(buf), block->cs->graph_left, block->cs->graph_right);
+
+
+
+    //block_reset(block);
+    //block_add_text(block, "battery", "PWR", block->cs->label);
+    //block_set_graph(block, "battery", block->maxlen, atoi(buf), col, block->cs->graph_right);
 
     fclose(fp);
     return block_is_changed(block);

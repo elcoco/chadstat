@@ -159,38 +159,45 @@ int block_event_init(struct JSONObject *jo, struct BlockClickEvent *ev)
     /* Parse the JSON received by I3 and put data in struct */
     ev->mod = 0x00;
 
+    //block_event_debug(ev);
+    //json_print(jo, 0);
+
     if (jo == NULL)
         return -1;
 
+    // NOTE: Sway doesn't send modifiers k:v
     // Parse modifier keys from json
     struct JSONObject *modifiers_obj = json_get_path(jo, "modifiers");
     if (jo == NULL)
         return -1;
 
-    struct JSONObject *mod = modifiers_obj->value;
-    while (mod != NULL) {
-        char *mod_str = json_get_string(mod);
-        if (mod_str == NULL)
-            continue;
+    if (modifiers_obj != NULL) {
 
-        if (strcmp(mod_str, "Control") == 0)
-            ev->mod = ev->mod | BLOCK_CTRL_PRESSED;
-        else if (strcmp(mod_str, "Lock") == 0)
-            ev->mod = ev->mod | BLOCK_LOCK_PRESSED;
-        else if (strcmp(mod_str, "Shift") == 0)
-            ev->mod = ev->mod | BLOCK_SHIFT_PRESSED;
-        else if (strcmp(mod_str, "Mod1") == 0)
-            ev->mod = ev->mod | BLOCK_MOD1_PRESSED;
-        else if (strcmp(mod_str, "Mod2") == 0)
-            ev->mod = ev->mod | BLOCK_MOD2_PRESSED;
-        else if (strcmp(mod_str, "Mod3") == 0)
-            ev->mod = ev->mod | BLOCK_MOD3_PRESSED;
-        else if (strcmp(mod_str, "Mod4") == 0)
-            ev->mod = ev->mod | BLOCK_MOD4_PRESSED;
-        else if (strcmp(mod_str, "Mod5") == 0)
-            ev->mod = ev->mod | BLOCK_MOD5_PRESSED;
+        struct JSONObject *mod = modifiers_obj->value;
+        while (mod != NULL) {
+            char *mod_str = json_get_string(mod);
+            if (mod_str == NULL)
+                continue;
 
-        mod = mod->next;
+            if (strcmp(mod_str, "Control") == 0)
+                ev->mod = ev->mod | BLOCK_CTRL_PRESSED;
+            else if (strcmp(mod_str, "Lock") == 0)
+                ev->mod = ev->mod | BLOCK_LOCK_PRESSED;
+            else if (strcmp(mod_str, "Shift") == 0)
+                ev->mod = ev->mod | BLOCK_SHIFT_PRESSED;
+            else if (strcmp(mod_str, "Mod1") == 0)
+                ev->mod = ev->mod | BLOCK_MOD1_PRESSED;
+            else if (strcmp(mod_str, "Mod2") == 0)
+                ev->mod = ev->mod | BLOCK_MOD2_PRESSED;
+            else if (strcmp(mod_str, "Mod3") == 0)
+                ev->mod = ev->mod | BLOCK_MOD3_PRESSED;
+            else if (strcmp(mod_str, "Mod4") == 0)
+                ev->mod = ev->mod | BLOCK_MOD4_PRESSED;
+            else if (strcmp(mod_str, "Mod5") == 0)
+                ev->mod = ev->mod | BLOCK_MOD5_PRESSED;
+
+            mod = mod->next;
+        }
     }
 
     // Parse mouse actions from json
