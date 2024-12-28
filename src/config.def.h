@@ -55,7 +55,7 @@ static struct Block blocks[] = {
     { "maildirs0",     15, get_maildirs,         NULL,             &maildir0,      &cs,    -1,     40,       ":" },
     { "maildirs1",     15, get_maildirs,         NULL,             &maildir1,      &cs,    -1,     40,       " " },
     { "network_usage", 30, get_nw_usage,         NULL,             &nw_usage_wlan, &cs,    60,     -1,       " " },
-    { "network",        3, get_network,          NULL,             NULL,           &cs,    60,     -1,       " " },
+    { "network",        3, get_network,          set_network,             NULL,           &cs,    60,     -1,       " " },
     { "datetime",       5, get_datetime,         NULL,             &dt,            &cs,    -1,     -1,       " " }
 };
 

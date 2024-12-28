@@ -31,6 +31,8 @@ void block_init(struct Block *block)
     block->text_len = 1;
     block->text_prev = strdup("");
     block->instance[0] = '\0';
+
+    block->state = 0;
 }
 
 void block_reset(struct Block *block)

@@ -9,6 +9,7 @@
 #include <linux/wireless.h>
 #include <ifaddrs.h>        // get network interfaces
 #include <netdb.h>
+#include <arpa/inet.h>     // inet_ntoa
 
 #include "../block.h"
 
@@ -16,6 +17,14 @@
   #define WIRELESS_PATH    "/proc/net/wireless"
 #endif
 
+#define NW_MAX_STR 256
+
+enum NwState {
+    NW_SHOW_SSID,
+    NW_SHOW_IP,
+};
+
 bool get_network(struct Block *block);
+int set_network(struct Block *block, struct BlockClickEvent *ev);
 
 #endif

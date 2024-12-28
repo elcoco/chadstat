@@ -95,6 +95,7 @@ struct Block {
     char     *text;
     uint32_t  text_len;
     char     *text_prev;
+    int state; // debugging
 };
 
 

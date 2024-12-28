@@ -99,65 +99,124 @@ static int8_t get_signal_strength(char* interface)
     return atoi(tok);
 }
 
+static int get_int_ip(char **buf)
+{
+    char hostbuffer[256];
+    struct hostent *host_entry;
+    int hostname;
+
+    // To retrieve hostname
+    hostname = gethostname(hostbuffer, sizeof(hostbuffer));
+    if (hostname < 0)
+        return -1;
+
+    // To retrieve host information
+    host_entry = gethostbyname(hostbuffer);
+    if (host_entry == NULL)
+        return -1;
+
+    // To convert an Internet network
+    // address into ASCII string
+    *buf = inet_ntoa(*((struct in_addr*) host_entry->h_addr_list[0]));
+    return 1;
+
+}
+
 bool get_network(struct Block *block)
 {
+    int sockfd;
+
     if (! block_is_elapsed(block))
         return false;
 
+    // Holds either ip or ssid
+    char str[NW_MAX_STR+1] = "";
+
     // find wireless if address
     char ifaddr[20] = {'\0'};
-    if (get_ifaddr(ifaddr) == -1){
-        block_set_error(block, "IF ERROR");
-        return block_is_changed(block);
-    }
+    if (get_ifaddr(ifaddr) == -1)
+        return -1;
 
     int8_t signal;
-
-    if ((signal=get_signal_strength(ifaddr)) == -1) {
+    if ((signal = get_signal_strength(ifaddr)) < 0) {
         block_set_error(block, "SIGNAL ERROR");
         return block_is_changed(block);
     }
 
-    int sockfd;
-
-    char id[IW_ESSID_MAX_SIZE+1] = {'\0'};
-
-    struct iwreq wreq;
-    memset(&wreq, 0, sizeof(struct iwreq));
-    wreq.u.essid.length = IW_ESSID_MAX_SIZE+1;
-
-    strcpy(wreq.ifr_name, ifaddr);
-
-    if((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-        block_set_error(block, "SOCKET ERROR");
-        goto cleanup;
-    }
-
-    // ioctl manipulates device parameters of special files
-    wreq.u.essid.pointer = id;
-
-    if (ioctl(sockfd,SIOCGIWESSID, &wreq) == -1) {
-        block_set_error(block, "IOCTL ERROR");
-        goto cleanup;
+    if (block->state == NW_SHOW_IP) {
+        char *buf = NULL;
+        if (get_int_ip(&buf) < 0) {
+            block_set_error(block, "IP ERROR");
+            return block_is_changed(block);
+        }
+        strncpy(str, buf, NW_MAX_STR);
     }
     else {
+
+        char id[IW_ESSID_MAX_SIZE+1] = {'\0'};
+
+        struct iwreq wreq;
+        memset(&wreq, 0, sizeof(struct iwreq));
+        wreq.u.essid.length = IW_ESSID_MAX_SIZE+1;
+
+        strcpy(wreq.ifr_name, ifaddr);
+
+        if((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+            block_set_error(block, "SOCKET ERROR");
+            close(sockfd);
+            goto cleanup;
+        }
+
+        // ioctl manipulates device parameters of special files
+        wreq.u.essid.pointer = id;
+
+        if (ioctl(sockfd,SIOCGIWESSID, &wreq) == -1) {
+            block_set_error(block, "IOCTL ERROR");
+            close(sockfd);
+            goto cleanup;
+        }
+
         if (strlen((char *)wreq.u.essid.pointer) > 0) {
-
-            block_reset(block);
-
-            if (signal > block->treshold)
-                block_set_strgraph(block, ifaddr, (char *)wreq.u.essid.pointer, signal, block->cs->ok, block->cs->graph_right);
-            else
-                block_set_strgraph(block, ifaddr, (char *)wreq.u.essid.pointer, signal, block->cs->warning, block->cs->graph_right);
-
-            block_add_text(block, "", "", block->cs->separator);
+            strncpy(str, (char *)wreq.u.essid.pointer, NW_MAX_STR);
         }
         else {
             block_set_error(block, "DISCONNECTED");
+            close(sockfd);
+            goto cleanup;
         }
     }
 
+
+    block_reset(block);
+
+    if (signal > block->treshold)
+        block_set_strgraph(block, ifaddr, str, signal, block->cs->ok, block->cs->graph_right);
+    else
+        block_set_strgraph(block, ifaddr, str, signal, block->cs->warning, block->cs->graph_right);
+
+    block_add_text(block, "", "", block->cs->separator);
+
 cleanup:
-    close(sockfd);
+    //close(sockfd);
     return block_is_changed(block);
+}
+
+int set_network(struct Block *block, struct BlockClickEvent *ev)
+{
+    if (ev->mod & BLOCK_LMB_PRESSED) {
+    
+        switch (block->state) {
+            case NW_SHOW_SSID:
+                block->state = NW_SHOW_IP;
+                break;
+            case NW_SHOW_IP:
+                block->state = NW_SHOW_SSID;
+                break;
+            default:
+                block->state = NW_SHOW_SSID;
+                break;
+        }
+        return 1;
+    }
+    return 0;
 }
