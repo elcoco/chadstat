@@ -12,8 +12,10 @@
 
 struct DateTimeArgs {
     const char *fmt;
+    const char *alt_fmt;
 };
 
 bool get_datetime(struct Block *block);
+int set_datetime(struct Block *block, struct BlockClickEvent *ev);
 
 #endif // !DATETIME_H

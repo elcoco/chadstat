@@ -26,7 +26,7 @@ static struct MaildirArgs maildir1 = {"MD2", "/path/to/Inbox2/new"};
 static struct HTTPArgs http_ddg = { "https://duckduckgo.com",  "DDG",  200,                  1L };
 
 static struct NWUsageArgs nw_usage_wlan = { "wlp0s20f3", "WLAN", NW_USAGE_TOTAL_TODAY };
-static struct DateTimeArgs dt = {"%a %d:%m:%Y %H:%M"};
+static struct DateTimeArgs dt = {"%a %H:%M","%a %d:%m:%Y %H:%M"};
 
 static struct CaffeineArgs caffeine = { "/tmp/caffeine.lock", "KOFFIE!" };
 
@@ -55,8 +55,8 @@ static struct Block blocks[] = {
     { "maildirs0",     15, get_maildirs,         NULL,             &maildir0,      &cs,    -1,     40,       ":" },
     { "maildirs1",     15, get_maildirs,         NULL,             &maildir1,      &cs,    -1,     40,       " " },
     { "network_usage", 30, get_nw_usage,         NULL,             &nw_usage_wlan, &cs,    60,     -1,       " " },
-    { "network",        3, get_network,          set_network,             NULL,           &cs,    60,     -1,       " " },
-    { "datetime",       5, get_datetime,         NULL,             &dt,            &cs,    -1,     -1,       " " }
+    { "network",        3, get_network,          set_network,      NULL,           &cs,    60,     -1,       " " },
+    { "datetime",       5, get_datetime,         set_datetime,     &dt,            &cs,    -1,     -1,       " " }
 };
 
 #endif

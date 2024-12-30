@@ -95,7 +95,7 @@ struct Block {
     char     *text;
     uint32_t  text_len;
     char     *text_prev;
-    int state; // debugging
+    int state;      // Implemented by block, the alt state we're in. eg. cycle through states on click
 };
 
 

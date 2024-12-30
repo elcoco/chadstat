@@ -124,7 +124,6 @@ static int get_int_ip(char **buf)
 
 bool get_network(struct Block *block)
 {
-    int sockfd;
 
     if (! block_is_elapsed(block))
         return false;
@@ -152,6 +151,7 @@ bool get_network(struct Block *block)
         strncpy(str, buf, NW_MAX_STR);
     }
     else {
+        int sockfd;
 
         char id[IW_ESSID_MAX_SIZE+1] = {'\0'};
 
@@ -164,7 +164,7 @@ bool get_network(struct Block *block)
         if((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
             block_set_error(block, "SOCKET ERROR");
             close(sockfd);
-            goto cleanup;
+            return block_is_changed(block);
         }
 
         // ioctl manipulates device parameters of special files
@@ -173,7 +173,7 @@ bool get_network(struct Block *block)
         if (ioctl(sockfd,SIOCGIWESSID, &wreq) == -1) {
             block_set_error(block, "IOCTL ERROR");
             close(sockfd);
-            goto cleanup;
+            return block_is_changed(block);
         }
 
         if (strlen((char *)wreq.u.essid.pointer) > 0) {
@@ -182,10 +182,10 @@ bool get_network(struct Block *block)
         else {
             block_set_error(block, "DISCONNECTED");
             close(sockfd);
-            goto cleanup;
+            return block_is_changed(block);
         }
+        close(sockfd);
     }
-
 
     block_reset(block);
 
@@ -196,8 +196,6 @@ bool get_network(struct Block *block)
 
     block_add_text(block, "", "", block->cs->separator);
 
-cleanup:
-    //close(sockfd);
     return block_is_changed(block);
 }
 
