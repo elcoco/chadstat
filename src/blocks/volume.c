@@ -88,3 +88,70 @@ bool get_pulse_volume(struct Block *block)
     block_add_text(block, "volume", "", block->cs->separator);
     return block_is_changed(block);
 }
+
+bool get_pipewire_volume(struct Block *block)
+{
+    /* Coulnd't find info on how to use the pipewire headers so taking the shortcut */
+    if (! block_is_elapsed(block))
+        return false;
+
+    block_reset(block);
+
+    char buf[128];
+    FILE *fp = popen("wpctl get-volume @DEFAULT_AUDIO_SINK@", "r");
+
+    if (fp == NULL) {
+        block_set_error(block, "VOLUME ERROR");
+        return false;
+    }
+
+    char *vol;
+    char *muted_status;
+
+    fgets(buf, sizeof(buf), fp);
+    char *tok;
+    char *saveptr;
+    tok = strtok_r(buf, " ", &saveptr);
+    vol = strtok_r(NULL, " ", &saveptr);
+    muted_status = strtok_r(NULL, " ", &saveptr);
+
+    if (! tok) {
+        block_set_error(block, "VOLUME ERROR");
+        return block_is_changed(block);
+    }
+    if (muted_status && strncmp(muted_status, "[MUTED]", 7) == 0) {
+        block_add_text(block, "volume", "SND_MUTED", block->cs->disabled);
+        return block_is_changed(block);
+    }
+
+    *(vol + strlen(vol)-1) = '\0';
+    float vol_perc = atof(vol) * 100;
+
+    char text[256] = "SND";
+    for (int i=0 ; i<block->maxlen ; i++)
+        strcat(text, "|");
+
+    pclose(fp);
+
+    block_set_strgraph(block, "volume", text, vol_perc, block->cs->graph_left, block->cs->graph_right);
+    block_add_text(block, "volume", "", block->cs->separator);
+    return block_is_changed(block);
+}
+
+int set_pipewire_volume(struct Block *block, struct BlockClickEvent *ev)
+{
+    int bufsize = 256;
+    char cmd[256];
+
+    if (ev->mod & BLOCK_LMB_PRESSED)
+        strncpy(cmd, "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle", bufsize-1);
+    else if (ev->mod & BLOCK_MOUSE_SCROLL_UP)
+        strncpy(cmd, "wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%+", bufsize-1);
+    else if (ev->mod & BLOCK_MOUSE_SCROLL_DOWN)
+        strncpy(cmd, "wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%-", bufsize-1);
+    else
+        return 0;
+
+    int result = system(cmd);
+    return 1;
+}

@@ -19,4 +19,7 @@ bool get_alsa_volume(struct Block *block);
 bool get_pulse_volume(struct Block *block);
 int set_pulse_volume(struct Block *block, struct BlockClickEvent *ev);
 
+bool get_pipewire_volume(struct Block *block);
+int set_pipewire_volume(struct Block *block, struct BlockClickEvent *ev);
+
 #endif
